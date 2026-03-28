@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("RoomateManager")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+92282239b543ccd5b81b0c66c006cc576e18c2af")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+be47754006d59b0822551b8575a2aa520e7ff80e")]
 [assembly: System.Reflection.AssemblyProductAttribute("RoomateManager")]
 [assembly: System.Reflection.AssemblyTitleAttribute("RoomateManager")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

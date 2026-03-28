@@ -1,8 +1,13 @@
 {
   "version": 2,
-  "dgSpecHash": "wEtTkzBCEK4=",
+  "dgSpecHash": "58TwufDgay8=",
   "success": true,
-  "projectFilePath": "C:\\Users\\TRAN XUAN MAN\\source\\repos\\RoomateManager\\RoomateManager\\RoomateManager.csproj",
-  "expectedPackageFiles": [],
+  "projectFilePath": "C:\\Room\\RoommateManager\\RoomateManager\\RoomateManager.csproj",
+  "expectedPackageFiles": [
+    "C:\\Users\\nguye\\.nuget\\packages\\microsoft.windowsdesktop.app.ref\\8.0.23\\microsoft.windowsdesktop.app.ref.8.0.23.nupkg.sha512",
+    "C:\\Users\\nguye\\.nuget\\packages\\microsoft.netcore.app.ref\\8.0.23\\microsoft.netcore.app.ref.8.0.23.nupkg.sha512",
+    "C:\\Users\\nguye\\.nuget\\packages\\microsoft.aspnetcore.app.ref\\8.0.23\\microsoft.aspnetcore.app.ref.8.0.23.nupkg.sha512",
+    "C:\\Users\\nguye\\.nuget\\packages\\microsoft.netcore.app.host.win-x64\\8.0.23\\microsoft.netcore.app.host.win-x64.8.0.23.nupkg.sha512"
+  ],
   "logs": []
 }
