@@ -1,23 +1,23 @@
 {
   "format": 1,
   "restore": {
-    "C:\\Users\\TRAN XUAN MAN\\source\\repos\\RoomateManager\\RoomateManager\\RoomateManager.csproj": {}
+    "C:\\Room\\RoommateManager\\RoomateManager\\RoomateManager.csproj": {}
   },
   "projects": {
-    "C:\\Users\\TRAN XUAN MAN\\source\\repos\\RoomateManager\\RoomateManager\\RoomateManager.csproj": {
+    "C:\\Room\\RoommateManager\\RoomateManager\\RoomateManager.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\TRAN XUAN MAN\\source\\repos\\RoomateManager\\RoomateManager\\RoomateManager.csproj",
+        "projectUniqueName": "C:\\Room\\RoommateManager\\RoomateManager\\RoomateManager.csproj",
         "projectName": "RoomateManager",
-        "projectPath": "C:\\Users\\TRAN XUAN MAN\\source\\repos\\RoomateManager\\RoomateManager\\RoomateManager.csproj",
-        "packagesPath": "C:\\Users\\TRAN XUAN MAN\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\TRAN XUAN MAN\\source\\repos\\RoomateManager\\RoomateManager\\obj\\",
+        "projectPath": "C:\\Room\\RoommateManager\\RoomateManager\\RoomateManager.csproj",
+        "packagesPath": "C:\\Users\\nguye\\.nuget\\packages\\",
+        "outputPath": "C:\\Room\\RoommateManager\\RoomateManager\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
           "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
         ],
         "configFilePaths": [
-          "C:\\Users\\TRAN XUAN MAN\\AppData\\Roaming\\NuGet\\NuGet.Config",
+          "C:\\Users\\nguye\\AppData\\Roaming\\NuGet\\NuGet.Config",
           "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
           "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
         ],
@@ -44,7 +44,7 @@
           "auditLevel": "low",
           "auditMode": "direct"
         },
-        "SdkAnalysisLevel": "9.0.300"
+        "SdkAnalysisLevel": "10.0.100"
       },
       "frameworks": {
         "net8.0-windows7.0": {
@@ -60,6 +60,24 @@
           ],
           "assetTargetFallback": true,
           "warn": true,
+          "downloadDependencies": [
+            {
+              "name": "Microsoft.AspNetCore.App.Ref",
+              "version": "[8.0.23, 8.0.23]"
+            },
+            {
+              "name": "Microsoft.NETCore.App.Host.win-x64",
+              "version": "[8.0.23, 8.0.23]"
+            },
+            {
+              "name": "Microsoft.NETCore.App.Ref",
+              "version": "[8.0.23, 8.0.23]"
+            },
+            {
+              "name": "Microsoft.WindowsDesktop.App.Ref",
+              "version": "[8.0.23, 8.0.23]"
+            }
+          ],
           "frameworkReferences": {
             "Microsoft.NETCore.App": {
               "privateAssets": "all"
@@ -68,7 +86,7 @@
               "privateAssets": "none"
             }
           },
-          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.308/PortableRuntimeIdentifierGraph.json"
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.102/PortableRuntimeIdentifierGraph.json"
         }
       }
     }
