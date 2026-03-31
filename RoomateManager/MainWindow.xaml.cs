@@ -1,8 +1,9 @@
 ﻿// MainWindow.xaml.cs
+using RoomateManager;
+using RoommateManager.Views;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
-using RoommateManager.Views;
 
 namespace RoommateManager
 {
@@ -38,6 +39,9 @@ namespace RoommateManager
                     Navigate(btn, new MemberListPage(this)); break;
                 case "Invoice":
                     Navigate(btn, new CreateInvoicePage(this)); break;
+                case "Task": // "Task" là cái Tag bạn đặt cho nút Phân công
+                    MainFrame.Navigate(new PhanCongPage()); // ĐÂY LÀ TRANG CỦA BẠN!
+                    break;
                 default:
                     Navigate(btn, new MemberListPage(this)); break;
             }
