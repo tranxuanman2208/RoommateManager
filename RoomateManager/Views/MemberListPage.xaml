@@ -15,12 +15,50 @@
                 <TextBlock Text="Danh sách thành viên"
                            Foreground="White" FontSize="18" FontWeight="Bold"
                            VerticalAlignment="Center"/>
-                <!-- Nút thêm (chỉ hiện với quản lý) -->
-                <Button x:Name="BtnAddMember" Content="+ Thêm"
-                        HorizontalAlignment="Right" VerticalAlignment="Center"
-                        Background="White" Foreground="#1976D2"
-                        BorderThickness="0" Padding="12,6"
-                        FontWeight="Bold" Click="BtnAddMember_Click"/>
+                <!-- Nút thêm + thông báo -->
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
+                    <Button x:Name="BtnAddMember" Content="+ Thêm"
+                            Background="White" Foreground="#1976D2"
+							
+                            BorderThickness="0" Padding="12,6"
+                            FontWeight="Bold" Click="BtnAddMember_Click"
+                            Margin="0,0,5,0"/>
+
+                    <Button x:Name="btnNotification" Content="🔔 Thông báo"
+                            Background="White" Foreground="#1976D2"
+                            BorderThickness="0" Padding="12,6"
+                            FontWeight="Bold" Click="BtnNotification_Click"/>
+
+                    <!-- Popup thông báo -->
+                    <Popup x:Name="NotificationPopup"
+                           PlacementTarget="{Binding ElementName=btnNotification}"
+                           Placement="Bottom"
+                           StaysOpen="False">
+                        <Border Background="White" CornerRadius="8" Padding="12" Width="300">
+                            <StackPanel>
+                                <TextBlock Text="Thông báo" FontSize="16" FontWeight="Bold" Margin="0,0,0,10"/>
+
+                                <!-- Item 1 -->
+                                <Border Background="#FAFAFA" CornerRadius="6" Padding="8" Margin="0,4">
+                                    <StackPanel>
+                                        <TextBlock Text="Nội dung: Đã đến hạn thanh toán tiền thuê phòng" FontWeight="Bold"/>
+                                        <TextBlock Text="Người gửi: Chủ phòng trọ" Foreground="Gray"/>
+                                        <TextBlock Text="Thời gian: 01/03/2026" Foreground="DarkGray" FontSize="11"/>
+                                    </StackPanel>
+                                </Border>
+
+                                <!-- Item 2 -->
+                                <Border Background="#FAFAFA" CornerRadius="6" Padding="8" Margin="0,4">
+                                    <StackPanel>
+                                        <TextBlock Text="Nội dung: Phụ thu tiền điện" FontWeight="Bold"/>
+                                        <TextBlock Text="Người gửi: Chủ phòng trọ" Foreground="Gray"/>
+                                        <TextBlock Text="Thời gian: 25/03/2026 19:21" Foreground="DarkGray" FontSize="11"/>
+                                    </StackPanel>
+                                </Border>
+                            </StackPanel>
+                        </Border>
+                    </Popup>
+                </StackPanel>
             </Grid>
         </Border>
 

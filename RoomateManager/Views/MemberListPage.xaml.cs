@@ -111,5 +111,9 @@ namespace RoommateManager.Views
                 MemberList.ItemsSource = _members;
             }
         }
+        private void BtnNotification_Click(object sender, RoutedEventArgs e)
+        {
+            NotificationPopup.IsOpen = true;
+        }
     }
 }
