@@ -63,7 +63,7 @@
                 </Button>
 
                 <!-- Quỹ -->
-                <Button Grid.Column="4" x:Name="BtnFund" Click="NavBtn_Click" Tag="Fund"
+                <Button Grid.Column="5" x:Name="BtnFund" Click="NavBtn_Click" Tag="Fund"
                         Background="Transparent" BorderThickness="0" Foreground="White">
                     <StackPanel HorizontalAlignment="Center">
                         <TextBlock Text="💰" FontSize="20" HorizontalAlignment="Center"/>
@@ -72,7 +72,7 @@
                 </Button>
 
                 <!-- Cài đặt -->
-                <Button Grid.Column="5" x:Name="BtnSettings" Click="NavBtn_Click" Tag="Settings"
+                <Button Grid.Column="6" x:Name="BtnSettings" Click="NavBtn_Click" Tag="Settings"
                         Background="Transparent" BorderThickness="0" Foreground="White">
                     <StackPanel HorizontalAlignment="Center">
                         <TextBlock Text="⚙️" FontSize="20" HorizontalAlignment="Center"/>
@@ -84,6 +84,13 @@
                     <StackPanel>
                         <TextBlock Text="🧹"/>
                         <TextBlock Text="Phân công"/>
+                    </StackPanel>
+                </Button>
+                <Button Grid.Column="4" x:Name="BtnViolation" Click="NavBtn_Click" Tag="Violation" 
+        Background="Transparent" BorderThickness="0" Foreground="White">
+                    <StackPanel HorizontalAlignment="Center">
+                        <TextBlock Text="⚖️" FontSize="20" HorizontalAlignment="Center"/>
+                        <TextBlock Text="Vi phạm" FontSize="10" HorizontalAlignment="Center"/>
                     </StackPanel>
                 </Button>
             </Grid>

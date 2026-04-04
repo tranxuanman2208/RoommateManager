@@ -42,6 +42,9 @@ namespace RoommateManager
                 case "Task": // "Task" là cái Tag bạn đặt cho nút Phân công
                     MainFrame.Navigate(new PhanCongPage()); // ĐÂY LÀ TRANG CỦA BẠN!
                     break;
+                case "Violation":
+                    MainFrame.Navigate(new XuLyViPhamPage());
+                    break;
                 default:
                     Navigate(btn, new MemberListPage(this)); break;
             }

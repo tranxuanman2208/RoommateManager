@@ -14,5 +14,8 @@
     <Compile Update="Views\MemberListPage.xaml.cs">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Update="XuLyViPhamPage.xaml.cs">
+      <SubType>Code</SubType>
+    </Compile>
   </ItemGroup>
 </Project>
