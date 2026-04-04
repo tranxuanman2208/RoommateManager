@@ -1,0 +1,112 @@
+﻿<Page x:Class="RoommateManager.Views.CreateInvoicePage"
+      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+      Title="Tạo hóa đơn" Background="#F5F5F5" Width="423">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="56"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- Header -->
+        <Border Grid.Row="0" Background="#1976D2">
+            <TextBlock Text="Tạo hóa đơn mới" Foreground="White"
+                       FontSize="18" FontWeight="Bold"
+                       VerticalAlignment="Center" Margin="16,0"/>
+        </Border>
+
+        <!-- Form -->
+        <ScrollViewer Grid.Row="1">
+            <StackPanel Margin="16">
+
+                <!-- Thông báo bản nháp -->
+                <Border x:Name="DraftBanner" Background="#FFF9C4" CornerRadius="8"
+                        Padding="12" Margin="0,0,0,12" Visibility="Collapsed">
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="📝 Tiếp tục bản nháp từ lần trước? "
+                                   VerticalAlignment="Center"/>
+                        <Button Content="Có" Click="BtnRestoreDraft_Click"
+                                Background="#F9A825" Foreground="White"
+                                BorderThickness="0" Padding="8,4" Margin="8,0,4,0"/>
+                        <Button Content="Không" Click="BtnDiscardDraft_Click"
+                                Background="#9E9E9E" Foreground="White"
+                                BorderThickness="0" Padding="8,4"/>
+                    </StackPanel>
+                </Border>
+
+                <!-- Tên hóa đơn -->
+                <TextBlock Margin="0,0,0,4">
+                    <Run Text="Tên hóa đơn "/><Run Text="*" Foreground="Red"/>
+                </TextBlock>
+                <TextBox x:Name="TxtName" Padding="10" Margin="0,0,0,4"
+                         TextChanged="Form_Changed"/>
+                <TextBlock x:Name="ErrName" Foreground="Red" FontSize="11"
+                           Margin="0,0,0,10" Visibility="Collapsed"
+                           Text="Tên hóa đơn không được để trống."/>
+
+                <!-- Loại chi phí -->
+                <TextBlock Text="Loại chi phí" Margin="0,0,0,4"/>
+                <ComboBox x:Name="CmbType" Padding="10" Margin="0,0,0,16"
+                          SelectionChanged="Form_Changed">
+                    <ComboBoxItem Content="Nhà"/>
+                    <ComboBoxItem Content="Điện"/>
+                    <ComboBoxItem Content="Nước"/>
+                    <ComboBoxItem Content="Mạng"/>
+                    <ComboBoxItem Content="Khác"/>
+                </ComboBox>
+
+                <!-- Tổng số tiền -->
+                <TextBlock Margin="0,0,0,4">
+                    <Run Text="Tổng số tiền "/><Run Text="*" Foreground="Red"/>
+                </TextBlock>
+                <TextBox x:Name="TxtAmount" Padding="10" Margin="0,0,0,4"
+                         TextChanged="TxtAmount_Changed"/>
+                <TextBlock x:Name="ErrAmount" Foreground="Red" FontSize="11"
+                           Margin="0,0,0,10" Visibility="Collapsed"
+                           Text="Số tiền không hợp lệ."/>
+
+                <!-- Phương thức chia -->
+                <TextBlock Text="Phương thức chia" Margin="0,0,0,4"/>
+                <StackPanel Orientation="Horizontal" Margin="0,0,0,12">
+                    <RadioButton x:Name="RbEqual" Content="Chia đều" IsChecked="True"
+                                 Margin="0,0,20,0" Checked="SplitMethod_Changed"/>
+                    <RadioButton x:Name="RbManual" Content="Chia thủ công"
+                                 Checked="SplitMethod_Changed"/>
+                </StackPanel>
+
+                <!-- Chia thủ công panel -->
+                <Border x:Name="ManualPanel" Visibility="Collapsed"
+                        Background="White" CornerRadius="8" Padding="12" Margin="0,0,0,12">
+                    <StackPanel>
+                        <TextBlock Text="Nhập số tiền từng người:" FontWeight="SemiBold" Margin="0,0,0,8"/>
+                        <StackPanel x:Name="ManualInputs"/>
+                        <Border Margin="0,8,0,0" Background="#E3F2FD" CornerRadius="6" Padding="10">
+                            <TextBlock x:Name="TxtSplitSummary" FontSize="13"
+                                       Text="Đã phân bổ: 0đ / 0đ"/>
+                        </Border>
+                    </StackPanel>
+                </Border>
+
+                <!-- Hạn đóng tiền -->
+                <TextBlock Text="Hạn đóng tiền" Margin="0,0,0,4"/>
+                <DatePicker x:Name="DpDeadline" Margin="0,0,0,16"
+                            SelectedDateChanged="Form_Changed"/>
+
+                <!-- Ghi chú -->
+                <TextBlock Text="Ghi chú (tùy chọn)" Margin="0,0,0,4"/>
+                <TextBox x:Name="TxtNote" Padding="10" Height="80"
+                         AcceptsReturn="True" TextWrapping="Wrap"
+                         TextChanged="Form_Changed"/>
+            </StackPanel>
+        </ScrollViewer>
+
+        <!-- Nút bên dưới -->
+        <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right"
+                    Margin="16" >
+            <Button Content="Xem trước" Click="BtnPreview_Click"
+                    Background="#1976D2" Foreground="White"
+                    BorderThickness="0" Padding="20,10" Margin="0,0,8,0"/>
+        </StackPanel>
+    </Grid>
+</Page>
