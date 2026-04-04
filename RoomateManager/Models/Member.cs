@@ -1,4 +1,6 @@
-﻿namespace RoommateManager.Models
+using System;
+
+namespace RoommateManager.Models // Sửa lại đúng 2 chữ m và bỏ dấu ;
 {
     public enum MemberRole { Manager, Member }
     public enum PaymentStatus { Paid, Unpaid, NotApplicable }
