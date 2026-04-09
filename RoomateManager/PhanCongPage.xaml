@@ -67,11 +67,11 @@
                             <GridViewColumn Width="40">
                                 <GridViewColumn.CellTemplate>
                                     <DataTemplate>
-                                        <CheckBox IsChecked="{Binding IsDone}" VerticalAlignment="Center"/>
+                                        <CheckBox IsChecked="{Binding IsDone}" IsEnabled="False" VerticalAlignment="Center"/>
                                     </DataTemplate>
                                 </GridViewColumn.CellTemplate>
                             </GridViewColumn>
-                            <GridViewColumn Header="Nhiệm vụ" Width="260">
+                            <GridViewColumn Header="Nhiệm vụ" Width="220">
                                 <GridViewColumn.CellTemplate>
                                     <DataTemplate>
                                         <StackPanel>
@@ -81,23 +81,11 @@
                                     </DataTemplate>
                                 </GridViewColumn.CellTemplate>
                             </GridViewColumn>
-                            <GridViewColumn Header="Tần suất" Width="100" DisplayMemberBinding="{Binding Frequency}" />
-                            <GridViewColumn Header="Người thực hiện" Width="140" DisplayMemberBinding="{Binding AssignedMember}" />
-                            <GridViewColumn Header="Trạng thái" Width="100" DisplayMemberBinding="{Binding Status}" />
-                            <GridViewColumn Header="Minh chứng" Width="140">
-                                <GridViewColumn.CellTemplate>
-                                    <DataTemplate>
-                                        <TextBlock Text="{Binding ImageProofPaths.Count, FallbackValue=''}" />
-                                    </DataTemplate>
-                                </GridViewColumn.CellTemplate>
-                            </GridViewColumn>
-                            <GridViewColumn Header="Ngày nhắc tiếp theo" Width="160">
-                                <GridViewColumn.CellTemplate>
-                                    <DataTemplate>
-                                        <TextBlock Text="{Binding NextReminderDisplay}" />
-                                    </DataTemplate>
-                                </GridViewColumn.CellTemplate>
-                            </GridViewColumn>
+                            <GridViewColumn Header="Tần suất" Width="90" DisplayMemberBinding="{Binding Frequency}" />
+                            <GridViewColumn Header="Người thực hiện" Width="120" DisplayMemberBinding="{Binding AssignedMember}" />
+                            <GridViewColumn Header="Trạng thái" Width="90" DisplayMemberBinding="{Binding Status}" />
+                            <GridViewColumn Header="Minh chứng (File)" Width="120" DisplayMemberBinding="{Binding MinhChungFileName}" />
+                            <GridViewColumn Header="Ngày nhắc tiếp theo" Width="140" DisplayMemberBinding="{Binding NextReminderDisplay}" />
                         </GridView>
                     </ListView.View>
                 </ListView>
@@ -110,18 +98,15 @@
                 <ColumnDefinition Width="Auto"/>
             </Grid.ColumnDefinitions>
 
-            <!-- spacer column left -->
-            <StackPanel Grid.Column="0" />
-
-            <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,0,0">
+            <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
                 <Border Width="80" Height="80" CornerRadius="8" Background="#ECEFF1" Margin="8" ClipToBounds="True">
                     <Image Name="imgPreview" Stretch="UniformToFill"/>
                 </Border>
 
                 <Button Name="btnOpenAddTask" Click="btnOpenAddTask_Click" Style="{StaticResource SecondaryButton}" Margin="8,0" Content="＋ Thêm nhiệm vụ"/>
-                <Button Name="btnUpload" Click="btnUpload_Click" Style="{StaticResource SecondaryButton}" Margin="8,0" Content="📷  Tải ảnh minh chứng"/>
-                <Button Name="btnXemMinhChung" Click="btnXemMinhChung_Click" Style="{StaticResource SecondaryButton}" Margin="8,0" Content="🔍  Xem minh chứng"/>
-                <Button Name="btnXacNhan" Click="btnXacNhan_Click" Style="{StaticResource PrimaryButton}" Margin="8,0" Content="✔  Xác nhận hoàn thành"/>
+                <Button Name="btnUpload" Click="btnUpload_Click" Style="{StaticResource SecondaryButton}" Margin="8,0" Content="📷 Tải ảnh minh chứng"/>
+                <Button Name="btnXemMinhChung" Click="btnXemMinhChung_Click" Style="{StaticResource SecondaryButton}" Margin="8,0" Content="🔍 Xem minh chứng"/>
+                <Button Name="btnXacNhan" Click="btnXacNhan_Click" Style="{StaticResource PrimaryButton}" Margin="8,0" Content="✔ Xác nhận hoàn thành"/>
             </StackPanel>
         </Grid>
     </Grid>

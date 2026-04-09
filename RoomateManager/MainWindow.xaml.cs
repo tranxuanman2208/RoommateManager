@@ -1,6 +1,7 @@
-﻿// MainWindow.xaml.cs
-using RoomateManager;
+﻿using RoomateManager;
 using RoommateManager.Views;
+using System;
+using System.Collections.Generic;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
@@ -9,21 +10,27 @@ namespace RoommateManager
 {
     public partial class MainWindow : Window
     {
-        private Button _activeBtn;
+        private Button? _activeBtn; // Thêm dấu ? để cho phép null (hết lỗi CS8618)
         public bool HasUnsavedData { get; set; } = false;
 
         public MainWindow()
         {
             InitializeComponent();
-            // Mặc định vào trang thành viên
-            Navigate(BtnHome, new MemberListPage(this));
+            // Đăng ký sự kiện Loaded để đảm bảo UI đã sẵn sàng trước khi Navigate
+            this.Loaded += MainWindow_Loaded;
+        }
+
+        private void MainWindow_Loaded(object sender, RoutedEventArgs e)
+        {
+            // Chỉ gọi BtnHome khi file XAML đã hết lỗi đỏ
+            if (BtnHome != null)
+                Navigate(BtnHome, new MemberListPage(this));
         }
 
         private void NavBtn_Click(object sender, RoutedEventArgs e)
         {
-            var btn = sender as Button;
+            if (sender is not Button btn) return;
 
-            // AC4: Cảnh báo nếu có dữ liệu chưa lưu
             if (HasUnsavedData)
             {
                 var result = MessageBox.Show(
@@ -33,34 +40,58 @@ namespace RoommateManager
                 HasUnsavedData = false;
             }
 
-            switch (btn.Tag.ToString())
+            string tag = btn.Tag?.ToString() ?? "";
+            switch (tag)
             {
                 case "Home":
                     Navigate(btn, new MemberListPage(this)); break;
                 case "Invoice":
                     Navigate(btn, new CreateInvoicePage(this)); break;
-                case "Task": // "Task" là cái Tag bạn đặt cho nút Phân công
-                    MainFrame.Navigate(new PhanCongPage()); // ĐÂY LÀ TRANG CỦA BẠN!
-                    break;
+                case "Task":
+                    Navigate(btn, new PhanCongPage()); break;
                 case "Violation":
-                    MainFrame.Navigate(new XuLyViPhamPage());
-                    break;
+                    Navigate(btn, new XuLyViPhamPage()); break;
+                case "BaoCao": 
+                    MainFrame.Navigate(new BaoCaoPage());break;
                 default:
                     Navigate(btn, new MemberListPage(this)); break;
             }
         }
 
-        private void Navigate(Button activeBtn, System.Windows.Controls.Page page)
+        private void Navigate(Button activeBtn, Page page)
         {
-            // Reset màu tất cả nút
-            foreach (var child in ((Grid)((Border)((Grid)Content).Children[1]).Child).Children)
-                if (child is Button b) b.Opacity = 0.6;
+            if (activeBtn == null) return;
 
-            // Highlight nút active
+            // Reset độ mờ của các nút
+            var navButtons = GetNavigationButtons();
+            if (navButtons != null)
+            {
+                foreach (UIElement child in navButtons)
+                {
+                    if (child is Button b) b.Opacity = 0.6;
+                }
+            }
+
             activeBtn.Opacity = 1.0;
             _activeBtn = activeBtn;
-
             MainFrame.Navigate(page);
+        }
+
+        private UIElementCollection? GetNavigationButtons()
+        {
+            try
+            {
+                // Tìm Grid chứa các nút điều hướng (nằm trong Row 1)
+                if (VisualTreeHelper.GetChildrenCount(this) > 0)
+                {
+                    var mainGrid = VisualTreeHelper.GetChild(this, 0) as Grid;
+                    var border = mainGrid?.Children[1] as Border;
+                    var navGrid = border?.Child as Grid;
+                    return navGrid?.Children;
+                }
+            }
+            catch { }
+            return null;
         }
     }
 }
