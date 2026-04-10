@@ -2,23 +2,21 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using Microsoft.Data.SqlClient; 
+using Microsoft.Data.SqlClient;
 using System.IO;
 using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media.Imaging;
+using System.ComponentModel;
 
 namespace RoomateManager
 {
     public partial class PhanCongPage : Page
     {
         private string? temporaryFileName = null;
-        // Tài kiểm tra lại Server Name của ông chỗ Data Source nhé
         private string strCon = @"Data Source=.\SQLEXPRESS;Initial Catalog=RoommateManager;Integrated Security=True;TrustServerCertificate=True";
-
         ObservableCollection<KitchenTask> tasks = new ObservableCollection<KitchenTask>();
-        Dictionary<KitchenTask, DateTime> nextReminders = new Dictionary<KitchenTask, DateTime>();
 
         public PhanCongPage()
         {
@@ -26,154 +24,49 @@ namespace RoomateManager
             LoadDanhSachXoayVong();
         }
 
-        private void btnOpenAddTask_Click(object sender, RoutedEventArgs e)
-        {
-            var dlg = new AddTaskWindow();
-            dlg.Owner = Window.GetWindow(this);
-            if (dlg.ShowDialog() == true)
-            {
-                var newTask = new KitchenTask
-                {
-                    TaskName = dlg.TaskName ?? "Nhiệm vụ mới",
-                    Description = dlg.Description ?? "",
-                    Frequency = dlg.Frequency ?? "Hàng ngày",
-                    AssignedMember = lstThanhVien.SelectedItem?.ToString()?.Split('.')[1].Trim() ?? "",
-                    IsDone = false,
-                    Status = "Đang trực",
-                    NextReminderDisplay = ""
-                };
-
-                tasks.Add(newTask);
-                DateTime next = ComputeNextOccurrence(DateTime.Now, newTask.Frequency);
-                nextReminders[newTask] = next;
-                newTask.NextReminderDisplay = next.ToString("g");
-            }
-        }
-
-        private void btnUpload_Click(object sender, RoutedEventArgs e)
-        {
-            OpenFileDialog openFileDialog = new OpenFileDialog();
-            openFileDialog.Filter = "Image files (*.png;*.jpeg;*.jpg)|*.png;*.jpeg;*.jpg";
-
-            if (openFileDialog.ShowDialog() == true)
-            {
-                try
-                {
-                    string folderPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "MinhChung");
-                    if (!Directory.Exists(folderPath)) Directory.CreateDirectory(folderPath);
-
-                    string fileName = Guid.NewGuid().ToString() + Path.GetExtension(openFileDialog.FileName);
-                    string destPath = Path.Combine(folderPath, fileName);
-
-                    File.Copy(openFileDialog.FileName, destPath, true);
-
-                    temporaryFileName = fileName;
-                    imgPreview.Source = new BitmapImage(new Uri(destPath));
-
-                    MessageBox.Show("Đã tải ảnh lên bộ nhớ tạm!", "Thông báo");
-                }
-                catch (Exception ex)
-                {
-                    MessageBox.Show("Lỗi tải ảnh: " + ex.Message);
-                }
-            }
-        }
-
-        private void btnXacNhan_Click(object sender, RoutedEventArgs e)
-        {
-            if (lstNhiemVu.SelectedItem is not KitchenTask selectedTask)
-            {
-                MessageBox.Show("Vui lòng chọn một nhiệm vụ!");
-                return;
-            }
-
-            if (string.IsNullOrEmpty(temporaryFileName))
-            {
-                MessageBox.Show("Vui lòng tải ảnh minh chứng trước!");
-                return;
-            }
-
-            using (SqlConnection conn = new SqlConnection(strCon))
-            {
-                try
-                {
-                    conn.Open();
-                    string query = "UPDATE PHANCONG SET DALAM = 1, MINHCHUNG = @minhchung WHERE ID = @id";
-                    SqlCommand cmd = new SqlCommand(query, conn);
-                    cmd.Parameters.AddWithValue("@minhchung", temporaryFileName);
-                    cmd.Parameters.AddWithValue("@id", selectedTask.ID);
-
-                    if (cmd.ExecuteNonQuery() > 0)
-                    {
-                        selectedTask.IsDone = true;
-                        selectedTask.Status = "Đã xong";
-                        selectedTask.MinhChungFileName = temporaryFileName;
-
-                        DateTime next = ComputeNextOccurrence(DateTime.Now, selectedTask.Frequency ?? "Hàng ngày");
-                        selectedTask.NextReminderDisplay = next.ToString("g");
-
-                        if (pgbTienDo.Value < 100)
-                        {
-                            pgbTienDo.Value = Math.Min(100, pgbTienDo.Value + 14);
-                            txtPhanTram.Text = (int)pgbTienDo.Value + "% Hoàn thành";
-                        }
-
-                        temporaryFileName = null;
-                        imgPreview.Source = null;
-                        MessageBox.Show("Xác nhận hoàn thành thành công!", "Thành công");
-                    }
-                }
-                catch (Exception ex)
-                {
-                    MessageBox.Show("Lỗi Database: " + ex.Message);
-                }
-            }
-        }
-
-        private void btnXemMinhChung_Click(object sender, RoutedEventArgs e)
-        {
-            if (lstNhiemVu.SelectedItem is not KitchenTask selectedTask || string.IsNullOrEmpty(selectedTask.MinhChungFileName))
-            {
-                MessageBox.Show("Chưa có minh chứng!");
-                return;
-            }
-
-            string fullPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "MinhChung", selectedTask.MinhChungFileName);
-            if (File.Exists(fullPath))
-            {
-                System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(fullPath) { UseShellExecute = true });
-            }
-            else { MessageBox.Show("File không tồn tại!"); }
-        }
-
-        private DateTime ComputeNextOccurrence(DateTime from, string frequency)
-        {
-            var f = frequency.Trim();
-            if (f.Contains("Hàng ngày")) return from.Date.AddDays(1).AddHours(9);
-            if (f.Contains("Hàng tuần")) return from.Date.AddDays(7).AddHours(9);
-            if (f.Contains("Hàng tháng")) return from.Date.AddMonths(1).AddHours(9);
-            return from.Date.AddDays(1).AddHours(9);
-        }
-
         private void LoadDanhSachXoayVong()
         {
-            List<string> members = new List<string> { "Tấn Tài", "Xuân Mẫn", "Minh Nhật", "Tấn Thiện", "Hoàng Huy", "Gia Bảo", "Trần Minh Nhật" };
-            int currentWeek = System.Globalization.CultureInfo.CurrentCulture.Calendar.GetWeekOfYear(DateTime.Now, System.Globalization.DateTimeFormatInfo.CurrentInfo.CalendarWeekRule, DayOfWeek.Monday);
-
-            List<string> rotatedList = new List<string>();
-            for (int i = 0; i < members.Count; i++)
+            List<ThanhVienVM> members = new List<ThanhVienVM>();
+            try
             {
-                int newIndex = (i + currentWeek + 3) % members.Count;
-                rotatedList.Add($"{i + 1}. {members[newIndex]}");
-            }
+                using (SqlConnection conn = new SqlConnection(strCon))
+                {
+                    conn.Open();
+                    string sql = "SELECT ID, TEN FROM THANHVIEN WHERE CON = 1";
+                    SqlCommand cmd = new SqlCommand(sql, conn);
+                    using (SqlDataReader r = cmd.ExecuteReader())
+                    {
+                        while (r.Read())
+                            members.Add(new ThanhVienVM { ID = r["ID"].ToString()!, Ten = r["TEN"].ToString()! });
+                    }
+                }
 
-            lstThanhVien.ItemsSource = rotatedList;
-            lstThanhVien.SelectedIndex = 0;
-            string firstMember = rotatedList[0].Split('.')[1].Trim();
-            LoadDataFromDB(firstMember);
+                if (members.Count == 0) return;
+
+                int currentWeek = System.Globalization.CultureInfo.CurrentCulture.Calendar.GetWeekOfYear(
+                    DateTime.Now, System.Globalization.DateTimeFormatInfo.CurrentInfo.CalendarWeekRule, DayOfWeek.Monday);
+
+                List<ThanhVienVM> rotatedList = new List<ThanhVienVM>();
+                for (int i = 0; i < members.Count; i++)
+                {
+                    int newIndex = (i + currentWeek) % members.Count;
+                    rotatedList.Add(members[newIndex]);
+                }
+
+                lstThanhVien.ItemsSource = rotatedList;
+                lstThanhVien.DisplayMemberPath = "Ten";
+                lstThanhVien.SelectedValuePath = "ID";
+                lstThanhVien.SelectedIndex = 0;
+            }
+            catch (Exception ex) { MessageBox.Show("Lỗi load thành viên: " + ex.Message); }
         }
 
-        private void LoadDataFromDB(string nguoiTruc)
+        private void lstThanhVien_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (lstThanhVien.SelectedValue is string id) LoadDataFromDB(id);
+        }
+
+        private void LoadDataFromDB(string idThanhVien)
         {
             tasks.Clear();
             using (SqlConnection conn = new SqlConnection(strCon))
@@ -181,51 +74,124 @@ namespace RoomateManager
                 try
                 {
                     conn.Open();
-                    string query = "SELECT ID, TENCV, NGUOITHUCHIEN, DALAM, MINHCHUNG FROM PHANCONG WHERE NGUOITHUCHIEN = @name AND (DAXOA = 0 OR DAXOA IS NULL)";
+                    string query = @"SELECT pc.*, tv.TEN FROM PHANCONG pc 
+                                   JOIN THANHVIEN tv ON pc.NGUOITHUCHIEN = tv.ID 
+                                   WHERE pc.NGUOITHUCHIEN = @id AND (pc.DAXOA = 0 OR pc.DAXOA IS NULL)";
                     SqlCommand cmd = new SqlCommand(query, conn);
-                    cmd.Parameters.AddWithValue("@name", nguoiTruc);
+                    cmd.Parameters.AddWithValue("@id", idThanhVien);
                     using (SqlDataReader r = cmd.ExecuteReader())
                     {
                         while (r.Read())
                         {
                             tasks.Add(new KitchenTask
                             {
-                                ID = r["ID"] != DBNull.Value ? (int)r["ID"] : 0,
-                                TaskName = r["TENCV"]?.ToString() ?? "",
-                                AssignedMember = r["NGUOITHUCHIEN"]?.ToString() ?? "",
+                                ID = (int)r["ID"],
+                                TaskName = r["TENCV"]?.ToString(),
+                                AssignedMemberName = r["TEN"]?.ToString(),
                                 IsDone = r["DALAM"] != DBNull.Value && (bool)r["DALAM"],
-                                MinhChungFileName = r["MINHCHUNG"]?.ToString() ?? "",
-                                Status = (r["DALAM"] != DBNull.Value && (bool)r["DALAM"]) ? "Đã xong" : "Đang trực",
-                                Frequency = "Hàng ngày",
-                                Description = "",
-                                NextReminderDisplay = ""
+                                MinhChungFileName = r["MINHCHUNG"]?.ToString(),
+                                NgayThucHienDisplay = r["NGAYTH"] != DBNull.Value ? Convert.ToDateTime(r["NGAYTH"]).ToString("dd/MM/yyyy") : ""
                             });
                         }
                     }
+                    lstNhiemVu.ItemsSource = tasks;
                 }
-                catch (Exception) { }
+                catch { }
             }
-            lstNhiemVu.ItemsSource = tasks;
         }
 
-        public class KitchenTask : System.ComponentModel.INotifyPropertyChanged
+        private async void btnOpenAddTask_Click(object sender, RoutedEventArgs e)
+        {
+            var dlg = new AddTaskWindow { Owner = Window.GetWindow(this) };
+            if (dlg.ShowDialog() == true && lstThanhVien.SelectedValue is string idUser)
+            {
+                try
+                {
+                    using (SqlConnection conn = new SqlConnection(strCon))
+                    {
+                        await conn.OpenAsync();
+                        string sql = "INSERT INTO PHANCONG (TENCV, NGUOITHUCHIEN, NGAYTH, DALAM, DAXOA) VALUES (@ten, @id, GETDATE(), 0, 0)";
+                        SqlCommand cmd = new SqlCommand(sql, conn);
+                        cmd.Parameters.AddWithValue("@ten", dlg.TaskName ?? "Nhiệm vụ mới");
+                        cmd.Parameters.AddWithValue("@id", idUser);
+                        await cmd.ExecuteNonQueryAsync();
+                        LoadDataFromDB(idUser);
+                    }
+                }
+                catch (Exception ex) { MessageBox.Show(ex.Message); }
+            }
+        }
+
+        private void btnUpload_Click(object sender, RoutedEventArgs e)
+        {
+            OpenFileDialog op = new OpenFileDialog { Filter = "Image files (*.png;*.jpeg;*.jpg)|*.png;*.jpeg;*.jpg" };
+            if (op.ShowDialog() == true)
+            {
+                try
+                {
+                    string folder = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "MinhChung");
+                    if (!Directory.Exists(folder)) Directory.CreateDirectory(folder);
+                    string fileName = Guid.NewGuid().ToString() + Path.GetExtension(op.FileName);
+                    File.Copy(op.FileName, Path.Combine(folder, fileName), true);
+                    temporaryFileName = fileName;
+                    imgPreview.Source = new BitmapImage(new Uri(Path.Combine(folder, fileName)));
+                }
+                catch { }
+            }
+        }
+
+        private async void btnXacNhan_Click(object sender, RoutedEventArgs e)
+        {
+            if (lstNhiemVu.SelectedItem is not KitchenTask task || string.IsNullOrEmpty(temporaryFileName))
+            {
+                MessageBox.Show("Chọn nhiệm vụ và tải ảnh minh chứng!"); return;
+            }
+            try
+            {
+                using (SqlConnection conn = new SqlConnection(strCon))
+                {
+                    await conn.OpenAsync();
+                    string sql = "UPDATE PHANCONG SET DALAM = 1, MINHCHUNG = @mc WHERE ID = @id";
+                    SqlCommand cmd = new SqlCommand(sql, conn);
+                    cmd.Parameters.AddWithValue("@mc", temporaryFileName);
+                    cmd.Parameters.AddWithValue("@id", task.ID);
+                    if (await cmd.ExecuteNonQueryAsync() > 0)
+                    {
+                        task.IsDone = true;
+                        task.MinhChungFileName = temporaryFileName;
+                        temporaryFileName = null; imgPreview.Source = null;
+                        MessageBox.Show("Thành công!");
+                    }
+                }
+            }
+            catch (Exception ex) { MessageBox.Show(ex.Message); }
+        }
+
+        private void btnXemMinhChung_Click(object sender, RoutedEventArgs e)
+        {
+            if (lstNhiemVu.SelectedItem is KitchenTask task && !string.IsNullOrEmpty(task.MinhChungFileName))
+            {
+                string path = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "MinhChung", task.MinhChungFileName);
+                if (File.Exists(path)) System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(path) { UseShellExecute = true });
+            }
+        }
+
+        public class KitchenTask : INotifyPropertyChanged
         {
             public int ID { get; set; }
             public string? TaskName { get; set; }
             public string? Description { get; set; }
-            public string? Frequency { get; set; }
-            public string? AssignedMember { get; set; }
-            public bool IsDone { get; set; }
-            public string? NextReminderDisplay { get; set; }
-
-            private string _status = "Đang trực";
-            public string? Status { get => _status; set { _status = value ?? ""; OnPropertyChanged(nameof(Status)); } }
-
-            private string _minhChung = "";
-            public string? MinhChungFileName { get => _minhChung; set { _minhChung = value ?? ""; OnPropertyChanged(nameof(MinhChungFileName)); } }
-
-            public event System.ComponentModel.PropertyChangedEventHandler? PropertyChanged;
-            void OnPropertyChanged(string name) => PropertyChanged?.Invoke(this, new System.ComponentModel.PropertyChangedEventArgs(name));
+            public string? AssignedMemberName { get; set; }
+            private bool _isDone;
+            public bool IsDone { get { return _isDone; } set { _isDone = value; OnPropertyChanged("IsDone"); OnPropertyChanged("Status"); OnPropertyChanged("StatusColor"); } }
+            public string Status => IsDone ? "Đã xong" : "Đang trực";
+            public string StatusColor => IsDone ? "#27AE60" : "#E67E22";
+            public string? MinhChungFileName { get; set; }
+            public string? NgayThucHienDisplay { get; set; }
+            public event PropertyChangedEventHandler? PropertyChanged;
+            protected void OnPropertyChanged(string name) => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
         }
+
+        public class ThanhVienVM { public string ID { get; set; } = ""; public string Ten { get; set; } = ""; }
     }
 }

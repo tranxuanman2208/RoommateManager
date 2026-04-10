@@ -5,7 +5,7 @@
       xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
       xmlns:local="clr-namespace:RoomateManager"
       mc:Ignorable="d" 
-      d:DesignHeight="450" d:DesignWidth="800"
+      d:DesignHeight="550" d:DesignWidth="900"
       Title="PhanCongPage">
 
     <Page.Resources>
@@ -25,11 +25,9 @@
                 </Setter.Value>
             </Setter>
         </Style>
-
         <Style x:Key="PrimaryButton" TargetType="Button" BasedOn="{StaticResource RoundedButton}">
             <Setter Property="Background" Value="#27AE60"/>
         </Style>
-
         <Style x:Key="SecondaryButton" TargetType="Button" BasedOn="{StaticResource RoundedButton}">
             <Setter Property="Background" Value="#95A5A6"/>
         </Style>
@@ -57,38 +55,45 @@
             </Grid.ColumnDefinitions>
 
             <GroupBox Header="Thành viên (Xoay vòng)" Grid.Column="0" Margin="0,0,12,0" Padding="8" BorderBrush="#BDC3C7">
-                <ListBox Name="lstThanhVien" BorderThickness="0" Background="Transparent" HorizontalContentAlignment="Stretch"/>
+                <ListBox Name="lstThanhVien" BorderThickness="0" Background="Transparent" SelectionChanged="lstThanhVien_SelectionChanged"/>
             </GroupBox>
 
-            <GroupBox Header="Danh sách nhiệm vụ dọn dẹp" Grid.Column="1" Padding="8" BorderBrush="#BDC3C7" Margin="0,0,0,0">
-                <ListView Name="lstNhiemVu" BorderThickness="0" Margin="8,0,8,0">
-                    <ListView.View>
-                        <GridView>
-                            <GridViewColumn Width="40">
-                                <GridViewColumn.CellTemplate>
-                                    <DataTemplate>
-                                        <CheckBox IsChecked="{Binding IsDone}" IsEnabled="False" VerticalAlignment="Center"/>
-                                    </DataTemplate>
-                                </GridViewColumn.CellTemplate>
-                            </GridViewColumn>
-                            <GridViewColumn Header="Nhiệm vụ" Width="220">
-                                <GridViewColumn.CellTemplate>
-                                    <DataTemplate>
-                                        <StackPanel>
-                                            <TextBlock Text="{Binding TaskName}" FontWeight="Bold"/>
-                                            <TextBlock Text="{Binding Description}" FontSize="11" Foreground="Gray"/>
-                                        </StackPanel>
-                                    </DataTemplate>
-                                </GridViewColumn.CellTemplate>
-                            </GridViewColumn>
-                            <GridViewColumn Header="Tần suất" Width="90" DisplayMemberBinding="{Binding Frequency}" />
-                            <GridViewColumn Header="Người thực hiện" Width="120" DisplayMemberBinding="{Binding AssignedMember}" />
-                            <GridViewColumn Header="Trạng thái" Width="90" DisplayMemberBinding="{Binding Status}" />
-                            <GridViewColumn Header="Minh chứng (File)" Width="120" DisplayMemberBinding="{Binding MinhChungFileName}" />
-                            <GridViewColumn Header="Ngày nhắc tiếp theo" Width="140" DisplayMemberBinding="{Binding NextReminderDisplay}" />
-                        </GridView>
-                    </ListView.View>
-                </ListView>
+            <GroupBox Header="Danh sách nhiệm vụ dọn dẹp" Grid.Column="1" Padding="8" BorderBrush="#BDC3C7">
+                <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
+                    <ListView Name="lstNhiemVu" BorderThickness="0" MinWidth="800">
+                        <ListView.View>
+                            <GridView>
+                                <GridViewColumn Width="40">
+                                    <GridViewColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <CheckBox IsChecked="{Binding IsDone}" IsEnabled="False" VerticalAlignment="Center"/>
+                                        </DataTemplate>
+                                    </GridViewColumn.CellTemplate>
+                                </GridViewColumn>
+                                <GridViewColumn Header="Nhiệm vụ" Width="200">
+                                    <GridViewColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <StackPanel>
+                                                <TextBlock Text="{Binding TaskName}" FontWeight="Bold" TextWrapping="Wrap"/>
+                                                <TextBlock Text="{Binding Description}" FontSize="11" Foreground="Gray" TextWrapping="Wrap"/>
+                                            </StackPanel>
+                                        </DataTemplate>
+                                    </GridViewColumn.CellTemplate>
+                                </GridViewColumn>
+                                <GridViewColumn Header="Người thực hiện" Width="120" DisplayMemberBinding="{Binding AssignedMemberName}" />
+                                <GridViewColumn Header="Trạng thái" Width="100">
+                                    <GridViewColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <TextBlock Text="{Binding Status}" Foreground="{Binding StatusColor}" FontWeight="Bold"/>
+                                        </DataTemplate>
+                                    </GridViewColumn.CellTemplate>
+                                </GridViewColumn>
+                                <GridViewColumn Header="Minh chứng (File)" Width="150" DisplayMemberBinding="{Binding MinhChungFileName}" />
+                                <GridViewColumn Header="Ngày phân công" Width="120" DisplayMemberBinding="{Binding NgayThucHienDisplay}" />
+                            </GridView>
+                        </ListView.View>
+                    </ListView>
+                </ScrollViewer>
             </GroupBox>
         </Grid>
 
@@ -97,12 +102,10 @@
                 <ColumnDefinition Width="*"/>
                 <ColumnDefinition Width="Auto"/>
             </Grid.ColumnDefinitions>
-
             <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
                 <Border Width="80" Height="80" CornerRadius="8" Background="#ECEFF1" Margin="8" ClipToBounds="True">
                     <Image Name="imgPreview" Stretch="UniformToFill"/>
                 </Border>
-
                 <Button Name="btnOpenAddTask" Click="btnOpenAddTask_Click" Style="{StaticResource SecondaryButton}" Margin="8,0" Content="＋ Thêm nhiệm vụ"/>
                 <Button Name="btnUpload" Click="btnUpload_Click" Style="{StaticResource SecondaryButton}" Margin="8,0" Content="📷 Tải ảnh minh chứng"/>
                 <Button Name="btnXemMinhChung" Click="btnXemMinhChung_Click" Style="{StaticResource SecondaryButton}" Margin="8,0" Content="🔍 Xem minh chứng"/>
