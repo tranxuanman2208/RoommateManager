@@ -2,20 +2,20 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using Microsoft.Data.SqlClient;
 using System.IO;
 using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media.Imaging;
 using System.ComponentModel;
+using Microsoft.EntityFrameworkCore;
+using RoomateManager.Models;
 
 namespace RoomateManager
 {
     public partial class PhanCongPage : Page
     {
         private string? temporaryFileName = null;
-        private string strCon = @"Data Source=.\SQLEXPRESS;Initial Catalog=RoommateManager;Integrated Security=True;TrustServerCertificate=True";
         ObservableCollection<KitchenTask> tasks = new ObservableCollection<KitchenTask>();
 
         public PhanCongPage()
@@ -26,37 +26,36 @@ namespace RoomateManager
 
         private void LoadDanhSachXoayVong()
         {
-            List<ThanhVienVM> members = new List<ThanhVienVM>();
             try
             {
-                using (SqlConnection conn = new SqlConnection(strCon))
+                using (var db = new RoommateManagerContext())
                 {
-                    conn.Open();
-                    string sql = "SELECT ID, TEN FROM THANHVIEN WHERE CON = 1";
-                    SqlCommand cmd = new SqlCommand(sql, conn);
-                    using (SqlDataReader r = cmd.ExecuteReader())
+                    var members = db.Thanhviens
+                                    .Where(tv => tv.Con == true) // bit trong SQL là bool
+                                    .Select(tv => new ThanhVienVM
+                                    {
+                                        ID = tv.Id,
+                                        Ten = tv.Ten ?? ""
+                                    })
+                                    .ToList();
+
+                    if (members.Count == 0) return;
+
+                    int currentWeek = System.Globalization.CultureInfo.CurrentCulture.Calendar.GetWeekOfYear(
+                        DateTime.Now, System.Globalization.DateTimeFormatInfo.CurrentInfo.CalendarWeekRule, DayOfWeek.Monday);
+
+                    List<ThanhVienVM> rotatedList = new List<ThanhVienVM>();
+                    for (int i = 0; i < members.Count; i++)
                     {
-                        while (r.Read())
-                            members.Add(new ThanhVienVM { ID = r["ID"].ToString()!, Ten = r["TEN"].ToString()! });
+                        int newIndex = (i + currentWeek) % members.Count;
+                        rotatedList.Add(members[newIndex]);
                     }
+
+                    lstThanhVien.ItemsSource = rotatedList;
+                    lstThanhVien.DisplayMemberPath = "Ten";
+                    lstThanhVien.SelectedValuePath = "ID";
+                    lstThanhVien.SelectedIndex = 0;
                 }
-
-                if (members.Count == 0) return;
-
-                int currentWeek = System.Globalization.CultureInfo.CurrentCulture.Calendar.GetWeekOfYear(
-                    DateTime.Now, System.Globalization.DateTimeFormatInfo.CurrentInfo.CalendarWeekRule, DayOfWeek.Monday);
-
-                List<ThanhVienVM> rotatedList = new List<ThanhVienVM>();
-                for (int i = 0; i < members.Count; i++)
-                {
-                    int newIndex = (i + currentWeek) % members.Count;
-                    rotatedList.Add(members[newIndex]);
-                }
-
-                lstThanhVien.ItemsSource = rotatedList;
-                lstThanhVien.DisplayMemberPath = "Ten";
-                lstThanhVien.SelectedValuePath = "ID";
-                lstThanhVien.SelectedIndex = 0;
             }
             catch (Exception ex) { MessageBox.Show("Lỗi load thành viên: " + ex.Message); }
         }
@@ -69,35 +68,31 @@ namespace RoomateManager
         private void LoadDataFromDB(string idThanhVien)
         {
             tasks.Clear();
-            using (SqlConnection conn = new SqlConnection(strCon))
+            try
             {
-                try
+                using (var db = new RoommateManagerContext())
                 {
-                    conn.Open();
-                    string query = @"SELECT pc.*, tv.TEN FROM PHANCONG pc 
-                                   JOIN THANHVIEN tv ON pc.NGUOITHUCHIEN = tv.ID 
-                                   WHERE pc.NGUOITHUCHIEN = @id AND (pc.DAXOA = 0 OR pc.DAXOA IS NULL)";
-                    SqlCommand cmd = new SqlCommand(query, conn);
-                    cmd.Parameters.AddWithValue("@id", idThanhVien);
-                    using (SqlDataReader r = cmd.ExecuteReader())
+                    var query = db.Phancongs
+                                  .Include(pc => pc.NguoithuchienNavigation)
+                                  .Where(pc => pc.Nguoithuchien == idThanhVien && (pc.Daxoa == false || pc.Daxoa == null))
+                                  .ToList();
+
+                    foreach (var pc in query)
                     {
-                        while (r.Read())
+                        tasks.Add(new KitchenTask
                         {
-                            tasks.Add(new KitchenTask
-                            {
-                                ID = (int)r["ID"],
-                                TaskName = r["TENCV"]?.ToString(),
-                                AssignedMemberName = r["TEN"]?.ToString(),
-                                IsDone = r["DALAM"] != DBNull.Value && (bool)r["DALAM"],
-                                MinhChungFileName = r["MINHCHUNG"]?.ToString(),
-                                NgayThucHienDisplay = r["NGAYTH"] != DBNull.Value ? Convert.ToDateTime(r["NGAYTH"]).ToString("dd/MM/yyyy") : ""
-                            });
-                        }
+                            ID = pc.Id,
+                            TaskName = pc.Tencv,
+                            AssignedMemberName = pc.NguoithuchienNavigation?.Ten,
+                            IsDone = pc.Dalam == true,
+                            MinhChungFileName = pc.Minhchung,
+                            NgayThucHienDisplay = pc.Ngayth.HasValue ? pc.Ngayth.Value.ToString("dd/MM/yyyy") : ""
+                        });
                     }
                     lstNhiemVu.ItemsSource = tasks;
                 }
-                catch { }
             }
+            catch (Exception ex) { MessageBox.Show("Lỗi load nhiệm vụ: " + ex.Message); }
         }
 
         private async void btnOpenAddTask_Click(object sender, RoutedEventArgs e)
@@ -107,18 +102,23 @@ namespace RoomateManager
             {
                 try
                 {
-                    using (SqlConnection conn = new SqlConnection(strCon))
+                    using (var db = new RoommateManagerContext())
                     {
-                        await conn.OpenAsync();
-                        string sql = "INSERT INTO PHANCONG (TENCV, NGUOITHUCHIEN, NGAYTH, DALAM, DAXOA) VALUES (@ten, @id, GETDATE(), 0, 0)";
-                        SqlCommand cmd = new SqlCommand(sql, conn);
-                        cmd.Parameters.AddWithValue("@ten", dlg.TaskName ?? "Nhiệm vụ mới");
-                        cmd.Parameters.AddWithValue("@id", idUser);
-                        await cmd.ExecuteNonQueryAsync();
+                        var newPC = new Phancong
+                        {
+                            Tencv = dlg.TaskName ?? "Nhiệm vụ mới",
+                            Nguoithuchien = idUser,
+                            Ngayth = DateOnly.FromDateTime(DateTime.Now), // SQL date -> DateOnly
+                            Dalam = false,
+                            Daxoa = false
+                        };
+
+                        db.Phancongs.Add(newPC);
+                        await db.SaveChangesAsync();
                         LoadDataFromDB(idUser);
                     }
                 }
-                catch (Exception ex) { MessageBox.Show(ex.Message); }
+                catch (Exception ex) { MessageBox.Show("Lỗi thêm: " + ex.Message); }
             }
         }
 
@@ -142,29 +142,30 @@ namespace RoomateManager
 
         private async void btnXacNhan_Click(object sender, RoutedEventArgs e)
         {
-            if (lstNhiemVu.SelectedItem is not KitchenTask task || string.IsNullOrEmpty(temporaryFileName))
+            if (lstNhiemVu.SelectedItem is not KitchenTask taskItem || string.IsNullOrEmpty(temporaryFileName))
             {
                 MessageBox.Show("Chọn nhiệm vụ và tải ảnh minh chứng!"); return;
             }
+
             try
             {
-                using (SqlConnection conn = new SqlConnection(strCon))
+                using (var db = new RoommateManagerContext())
                 {
-                    await conn.OpenAsync();
-                    string sql = "UPDATE PHANCONG SET DALAM = 1, MINHCHUNG = @mc WHERE ID = @id";
-                    SqlCommand cmd = new SqlCommand(sql, conn);
-                    cmd.Parameters.AddWithValue("@mc", temporaryFileName);
-                    cmd.Parameters.AddWithValue("@id", task.ID);
-                    if (await cmd.ExecuteNonQueryAsync() > 0)
+                    var taskToUpdate = await db.Phancongs.FindAsync(taskItem.ID);
+                    if (taskToUpdate != null)
                     {
-                        task.IsDone = true;
-                        task.MinhChungFileName = temporaryFileName;
+                        taskToUpdate.Dalam = true;
+                        taskToUpdate.Minhchung = temporaryFileName;
+                        await db.SaveChangesAsync();
+
+                        taskItem.IsDone = true;
+                        taskItem.MinhChungFileName = temporaryFileName;
                         temporaryFileName = null; imgPreview.Source = null;
                         MessageBox.Show("Thành công!");
                     }
                 }
             }
-            catch (Exception ex) { MessageBox.Show(ex.Message); }
+            catch (Exception ex) { MessageBox.Show("Lỗi: " + ex.Message); }
         }
 
         private void btnXemMinhChung_Click(object sender, RoutedEventArgs e)
@@ -180,10 +181,9 @@ namespace RoomateManager
         {
             public int ID { get; set; }
             public string? TaskName { get; set; }
-            public string? Description { get; set; }
             public string? AssignedMemberName { get; set; }
             private bool _isDone;
-            public bool IsDone { get { return _isDone; } set { _isDone = value; OnPropertyChanged("IsDone"); OnPropertyChanged("Status"); OnPropertyChanged("StatusColor"); } }
+            public bool IsDone { get => _isDone; set { _isDone = value; OnPropertyChanged(nameof(IsDone)); OnPropertyChanged(nameof(Status)); OnPropertyChanged(nameof(StatusColor)); } }
             public string Status => IsDone ? "Đã xong" : "Đang trực";
             public string StatusColor => IsDone ? "#27AE60" : "#E67E22";
             public string? MinhChungFileName { get; set; }
