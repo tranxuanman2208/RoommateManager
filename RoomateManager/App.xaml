@@ -1,8 +1,7 @@
 ﻿<Application x:Class="RoomateManager.App"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:local="clr-namespace:RoomateManager"
-             StartupUri="MainWindow.xaml">
+             xmlns:local="clr-namespace:RoomateManager">
     <Application.Resources>
          
     </Application.Resources>
