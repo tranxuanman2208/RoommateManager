@@ -31,31 +31,85 @@
 
                     <!-- Popup thông báo -->
                     <Popup x:Name="NotificationPopup"
-                           PlacementTarget="{Binding ElementName=btnNotification}"
-                           Placement="Bottom"
-                           StaysOpen="False">
-                        <Border Background="White" CornerRadius="8" Padding="12" Width="300">
-                            <StackPanel>
-                                <TextBlock Text="Thông báo" FontSize="16" FontWeight="Bold" Margin="0,0,0,10"/>
+       PlacementTarget="{Binding ElementName=btnNotification}"
+       Placement="Bottom"
+       StaysOpen="False"
+       AllowsTransparency="True">
+                        <Border Background="White" CornerRadius="12" Width="300" Height="370" 
+            BorderBrush="#2196F3" BorderThickness="1" Margin="0,5,0,0">
+                            <Border.Effect>
+                                <DropShadowEffect BlurRadius="15" ShadowDepth="5" Opacity="0.15"/>
+                            </Border.Effect>
 
-                                <!-- Item 1 -->
-                                <Border Background="#FAFAFA" CornerRadius="6" Padding="8" Margin="0,4">
-                                    <StackPanel>
-                                        <TextBlock Text="Nội dung: Đã đến hạn thanh toán tiền thuê phòng" FontWeight="Bold"/>
-                                        <TextBlock Text="Người gửi: Chủ phòng trọ" Foreground="Gray"/>
-                                        <TextBlock Text="Thời gian: 01/03/2026" Foreground="DarkGray" FontSize="11"/>
-                                    </StackPanel>
-                                </Border>
+                            <Grid Margin="15">
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="*"/>
+                                    <RowDefinition Height="Auto"/>
+                                </Grid.RowDefinitions>
 
-                                <!-- Item 2 -->
-                                <Border Background="#FAFAFA" CornerRadius="6" Padding="8" Margin="0,4">
-                                    <StackPanel>
-                                        <TextBlock Text="Nội dung: Phụ thu tiền điện" FontWeight="Bold"/>
-                                        <TextBlock Text="Người gửi: Chủ phòng trọ" Foreground="Gray"/>
-                                        <TextBlock Text="Thời gian: 25/03/2026 19:21" Foreground="DarkGray" FontSize="11"/>
+                                <Grid Grid.Row="0" Margin="0,0,0,15">
+                                    <TextBlock Text="THÔNG BÁO" FontWeight="Bold" Foreground="#2196F3" 
+                           FontSize="16" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                    <Button Content="✕" HorizontalAlignment="Right" Background="Transparent" 
+                        BorderBrush="Transparent" FontSize="16" Foreground="#999" 
+                        Cursor="Hand" Click="btn_ClosePopup_Click"/>
+                                </Grid>
+
+                                <Grid Grid.Row="1">
+                                    <ScrollViewer x:Name="scrViewStatus" Visibility="Visible">
+                                        <ItemsControl x:Name="lstNotifications">
+                                            <ItemsControl.ItemTemplate>
+                                                <DataTemplate>
+                                                    <Border BorderBrush="#F2F2F2" BorderThickness="0,0,0,1" Background="Transparent" Padding="10,8">
+                                                        <Grid>
+                                                            <Grid.ColumnDefinitions>
+                                                                <ColumnDefinition Width="*"/>
+                                                                <ColumnDefinition Width="Auto"/>
+                                                            </Grid.ColumnDefinitions>
+                                                            <StackPanel>
+                                                                <TextBlock Text="{Binding Noidung}" TextWrapping="Wrap" FontSize="13" Foreground="#444"/>
+                                                                <TextBlock Text="{Binding Ngaytb}" FontSize="11" Foreground="#999" Margin="0,3,0,0"/>
+                                                            </StackPanel>
+                                                            <TextBlock Grid.Column="1" Text="{Binding TyleDoc}" Foreground="#2196F3" 
+                                                   FontSize="12" FontWeight="Bold" VerticalAlignment="Center" Margin="10,0,0,0"/>
+                                                        </Grid>
+                                                    </Border>
+                                                </DataTemplate>
+                                            </ItemsControl.ItemTemplate>
+                                        </ItemsControl>
+                                    </ScrollViewer>
+
+                                    <StackPanel x:Name="stkAddNotification" Visibility="Collapsed">
+                                        <TextBlock Text="Nội dung" FontSize="12" Foreground="#888" Margin="0,0,0,5"/>
+                                        <TextBox x:Name="txtInputTB" Height="80" TextWrapping="Wrap" AcceptsReturn="True" 
+                             Padding="8" BorderBrush="#EEE" BorderThickness="1" Margin="0,0,0,12"/>
+
+                                        <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
+                                            <TextBlock Text="Người gửi: " FontSize="12" Foreground="#888"/>
+                                            <TextBlock Text="Admin" FontSize="12" FontWeight="Bold" Foreground="#333" Margin="5,0,0,0"/>
+                                        </StackPanel>
+
+                                        <StackPanel Margin="0,0,0,20">
+                                            <TextBlock Text="Người nhận:" FontSize="12" Foreground="#888" Margin="0,0,0,5"/>
+                                            <ComboBox x:Name="cboRecipient" DisplayMemberPath="Ten" SelectedValuePath="Id" 
+                                  Height="30" VerticalContentAlignment="Center"/>
+                                        </StackPanel>
+
+                                        <Button Content="XÁC NHẬN GỬI" Height="38" Background="#2196F3" Foreground="White" 
+                            FontWeight="Bold" BorderThickness="0" Click="btnConfirmSend_Click"/>
                                     </StackPanel>
-                                </Border>
-                            </StackPanel>
+                                </Grid>
+
+                                <UniformGrid Grid.Row="2" Columns="2" Margin="0,15,0,0">
+                                    <Button x:Name="btnTabStatus" Content="TRẠNG THÁI" Height="35" Margin="0,0,3,0" 
+                        Background="White" Foreground="#2196F3" BorderBrush="#2196F3" 
+                        BorderThickness="1" FontWeight="SemiBold" FontSize="11" Click="btnModeStatus_Click"/>
+                                    <Button x:Name="btnTabAdd" Content="THÊM MỚI" Height="35" Margin="3,0,0,0" 
+                        Background="White" Foreground="#2196F3" BorderBrush="#2196F3" 
+                        BorderThickness="1" FontWeight="SemiBold" FontSize="11" Click="btnModeAdd_Click"/>
+                                </UniformGrid>
+                            </Grid>
                         </Border>
                     </Popup>
                 </StackPanel>
