@@ -9,9 +9,9 @@ using System.Windows.Controls;
 using System.Windows.Media.Imaging;
 using System.ComponentModel;
 using Microsoft.EntityFrameworkCore;
-using RoomateManager.Models; // Đã sửa thành 1 chữ 'm'
+using RoomateManager.Models;
 
-namespace RoomateManager // Đảm bảo namespace này khớp với project của bạn
+namespace RoomateManager
 {
     public partial class PhanCongPage : Page
     {
@@ -28,10 +28,10 @@ namespace RoomateManager // Đảm bảo namespace này khớp với project c�
         {
             try
             {
-                using (var db = new RoommateManagerContext()) // Đổi tên Context theo project
+                using (var db = new RoommateManagerContext())
                 {
                     var members = db.Thanhviens
-                                    .Where(tv => tv.Con == true) // bit trong SQL là bool
+                                    .Where(tv => tv.Con == true) 
                                     .Select(tv => new ThanhVienVM
                                     {
                                         ID = tv.Id,
@@ -108,7 +108,7 @@ namespace RoomateManager // Đảm bảo namespace này khớp với project c�
                         {
                             Tencv = dlg.TaskName ?? "Nhiệm vụ mới",
                             Nguoithuchien = idUser,
-                            Ngayth = DateOnly.FromDateTime(DateTime.Now), // SQL date -> DateOnly
+                            Ngayth = DateOnly.FromDateTime(DateTime.Now),
                             Dalam = false,
                             Daxoa = false
                         };

@@ -12,7 +12,6 @@ namespace RoommateManager.Views
         private MainWindow _mainWindow;
         private bool _isManager = true; // Giả lập: user hiện tại là quản lý
 
-        // ViewModel đơn giản để bind
         public class MemberVM
         {
             public int Id { get; set; }
