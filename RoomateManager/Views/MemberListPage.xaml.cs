@@ -1,10 +1,12 @@
-﻿using RoomateManager.Models;
+﻿using Microsoft.EntityFrameworkCore;
+using RoomateManager.Models;
 using RoommateManager.Models;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Documents; // Thêm thư viện này để dùng Run
 using System.Windows.Input;
 using System.Windows.Media;
 
@@ -14,8 +16,11 @@ namespace RoommateManager.Views
     {
         private MainWindow _mainWindow;
         private bool _isManager = true;
+        private string _currentUserId = "1";
 
-        // --- GIỮ NGUYÊN CLASS MemberVM ---
+        public enum MemberRole { Manager, Member }
+        public enum PaymentStatus { Paid, Unpaid, NotApplicable }
+
         public class MemberVM
         {
             public int Id { get; set; }
@@ -39,7 +44,6 @@ namespace RoommateManager.Views
             };
         }
 
-        // --- GIỮ NGUYÊN DANH SÁCH TẠM THỜI _members ---
         private List<MemberVM> _members = new List<MemberVM>
         {
             new MemberVM { Id=1, Name="Minh Nhật", Role=MemberRole.Manager, PaymentStatus=PaymentStatus.Paid, IsCurrentUser=true },
@@ -54,11 +58,75 @@ namespace RoommateManager.Views
             _mainWindow = mainWindow;
             MemberList.ItemsSource = _members;
             BtnAddMember.Visibility = _isManager ? Visibility.Visible : Visibility.Collapsed;
+            RefreshNotificationBadge();
         }
 
-        // ==========================================
-        // LOGIC POPUP THÔNG BÁO (ĐÃ CẬP NHẬT THEO GIAO DIỆN MỚI)
-        // ==========================================
+        // --- HÀM NHUỘM MÀU XANH CHO [NỘI DUNG TRONG NGOẶC] ---
+        private void txtNoidung_Loaded(object sender, RoutedEventArgs e)
+        {
+            var tb = sender as TextBlock;
+            if (tb == null || string.IsNullOrEmpty(tb.Text)) return;
+
+            string originalText = tb.Text;
+            int closeBracketIndex = originalText.IndexOf("]");
+
+            if (closeBracketIndex != -1)
+            {
+                // Tách phần trong ngoặc: [THÔNG BÁO] hoặc [VI PHẠM]
+                string tagPart = originalText.Substring(0, closeBracketIndex + 1);
+                // Tách phần nội dung còn lại
+                string contentPart = originalText.Substring(closeBracketIndex + 1);
+
+                tb.Inlines.Clear();
+
+                // 1. Phần [TAG] màu xanh dương, in đậm
+                Run runTag = new Run(tagPart)
+                {
+                    Foreground = new SolidColorBrush(Color.FromRgb(33, 150, 243)),
+                    FontWeight = FontWeights.Bold
+                };
+
+                // 2. Phần nội dung phía sau màu đen mặc định
+                Run runContent = new Run(contentPart)
+                {
+                    Foreground = Brushes.Black
+                };
+
+                tb.Inlines.Add(runTag);
+                tb.Inlines.Add(runContent);
+            }
+        }
+
+        public void RefreshNotificationBadge()
+        {
+            try
+            {
+                using (var db = new RoommateManagerContext())
+                {
+                    string userId = _currentUserId.Trim();
+                    var allDetails = db.ChitietXemTbs.AsNoTracking().ToList();
+
+                    int count = allDetails.Count(ct =>
+                        ct.Matv != null &&
+                        ct.Matv.ToString().Trim() == userId &&
+                        (ct.Dadoc == false || ct.Dadoc == null));
+
+                    if (count > 0)
+                    {
+                        txtBadgeCount.Text = count > 9 ? "9+" : count.ToString();
+                        BadgeBorder.Visibility = Visibility.Visible;
+                    }
+                    else
+                    {
+                        BadgeBorder.Visibility = Visibility.Collapsed;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine("Lỗi hiển thị Badge: " + ex.Message);
+            }
+        }
 
         private void BtnNotification_Click(object sender, RoutedEventArgs e)
         {
@@ -69,6 +137,7 @@ namespace RoommateManager.Views
         private void btn_ClosePopup_Click(object sender, RoutedEventArgs e)
         {
             NotificationPopup.IsOpen = false;
+            RefreshNotificationBadge();
         }
 
         private void btnModeStatus_Click(object sender, RoutedEventArgs e)
@@ -117,7 +186,6 @@ namespace RoommateManager.Views
                     var users = db.Thanhviens.ToList();
                     if (users.Count > 0)
                     {
-                        // Chỉ load cho combobox người nhận (người gửi đã là Admin cố định trên XAML)
                         cboRecipient.ItemsSource = users;
                         cboRecipient.SelectedIndex = 0;
                     }
@@ -140,76 +208,109 @@ namespace RoommateManager.Views
                 {
                     var tb = new Thongbao
                     {
-                        Noidung = txtInputTB.Text,
+                        Noidung = "[THÔNG BÁO] " + txtInputTB.Text.Trim(),
                         Ngaytb = DateOnly.FromDateTime(DateTime.Now),
                         Daxoa = false
                     };
                     db.Thongbaos.Add(tb);
                     db.SaveChanges();
 
-                    foreach (var tv in db.Thanhviens.ToList())
+                    var allMembers = db.Thanhviens.ToList();
+                    foreach (var tv in allMembers)
                     {
                         db.ChitietXemTbs.Add(new ChitietXemTb
                         {
                             Matb = tb.Matb,
-                            Matv = tv.Id,
+                            Matv = tv.Id.ToString(),
                             Dadoc = false
                         });
                     }
 
                     db.SaveChanges();
-                    MessageBox.Show("Đã gửi thông báo thành công!");
+                    MessageBox.Show("Đã gửi thông báo hệ thống thành công!");
 
                     txtInputTB.Clear();
                     btnModeStatus_Click(null, null);
+                    RefreshNotificationBadge();
                 }
             }
-            catch (Exception ex) { MessageBox.Show("Lỗi gửi thông báo: " + ex.Message); }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Lỗi khi gửi thông báo hệ thống: " + ex.Message);
+            }
         }
 
-        // ==========================================
-        // LOGIC QUẢN LÝ THÀNH VIÊN (GIỮ NGUYÊN GỐC)
-        // ==========================================
-
-        private void BtnAddMember_Click(object sender, RoutedEventArgs e)
+        private void btnViewDetail_MouseDown(object sender, MouseButtonEventArgs e)
         {
-            var dialog = new Window { Title = "Thêm thành viên", Width = 320, Height = 200, WindowStartupLocation = WindowStartupLocation.CenterOwner, Owner = _mainWindow };
-            var sp = new StackPanel { Margin = new Thickness(20) };
-            var tb = new TextBox { Margin = new Thickness(0, 8, 0, 8) };
-            var btn = new Button { Content = "Gửi lời mời", Background = Brushes.DodgerBlue, Foreground = Brushes.White, Padding = new Thickness(12, 8, 12, 8) };
+            var item = (sender as TextBlock)?.DataContext;
+            if (item == null) return;
 
-            btn.Click += (s, ev) => {
-                if (!string.IsNullOrWhiteSpace(tb.Text))
+            try
+            {
+                dynamic d = item;
+                string noiDung = d.Noidung;
+
+                using (var db = new RoommateManagerContext())
                 {
-                    MessageBox.Show($"Đã gửi lời mời tới: {tb.Text}", "Thành công");
-                    dialog.Close();
+                    var thongBao = db.Thongbaos.AsNoTracking().FirstOrDefault(t => t.Noidung == noiDung);
+
+                    if (thongBao != null)
+                    {
+                        var tatCaTV = db.Thanhviens.AsNoTracking().ToList();
+                        var chiTietDoc = db.ChitietXemTbs
+                                           .AsNoTracking()
+                                           .Where(ct => ct.Matb == thongBao.Matb)
+                                           .Select(ct => new { ct.Matv, ct.Dadoc })
+                                           .ToList();
+
+                        var daXem = (from ct in chiTietDoc
+                                     join tv in tatCaTV on ct.Matv equals tv.Id.ToString()
+                                     where ct.Dadoc == true
+                                     select tv.Ten).ToList();
+
+                        var daXemNames = daXem.ToList();
+                        var chuaXem = tatCaTV.Where(tv => !daXemNames.Contains(tv.Ten)).Select(tv => tv.Ten).ToList();
+
+                        string msg = $"--- TRẠNG THÁI XEM THÔNG BÁO ---\n\n";
+                        msg += $"✅ ĐÃ XEM ({daXem.Count}):\n" + (daXem.Any() ? "- " + string.Join("\n- ", daXem) : "(Trống)");
+                        msg += $"\n\n❌ CHƯA XEM ({chuaXem.Count}):\n" + (chuaXem.Any() ? "- " + string.Join("\n- ", chuaXem) : "(Trống)");
+
+                        MessageBox.Show(msg, "Chi tiết hệ thống", MessageBoxButton.OK, MessageBoxImage.Information);
+                    }
                 }
-            };
-
-            sp.Children.Add(new TextBlock { Text = "Nhập thông tin thành viên:" });
-            sp.Children.Add(tb);
-            sp.Children.Add(btn);
-            dialog.Content = sp;
-            dialog.ShowDialog();
+            }
+            catch (Exception ex) { MessageBox.Show("Lỗi hiển thị: " + ex.Message); }
         }
 
-        private void MemberCard_RightClick(object sender, MouseButtonEventArgs e)
+        private void btnDeleteNotification_Click(object sender, RoutedEventArgs e)
         {
-            if (!_isManager) return;
-            var border = sender as Border;
-            var member = border?.DataContext as MemberVM;
-            if (member == null || member.IsCurrentUser)
+            var item = (sender as Button)?.DataContext;
+            if (item == null) return;
+
+            if (MessageBox.Show("Bạn có chắc chắn muốn xóa thông báo này không?", "Xác nhận xóa", MessageBoxButton.YesNo, MessageBoxImage.Question) == MessageBoxResult.Yes)
             {
-                if (member?.IsCurrentUser == true)
-                    MessageBox.Show("Bạn cần chuyển quyền Quản lý cho thành viên khác trước khi rời phòng.", "Không thể thực hiện", MessageBoxButton.OK, MessageBoxImage.Warning);
-                return;
-            }
-            if (MessageBox.Show($"Xóa thành viên '{member.Name}' khỏi phòng?", "Xác nhận xóa", MessageBoxButton.YesNo, MessageBoxImage.Question) == MessageBoxResult.Yes)
-            {
-                _members.Remove(member);
-                MemberList.ItemsSource = null;
-                MemberList.ItemsSource = _members;
+                try
+                {
+                    dynamic d = item;
+                    string noiDung = d.Noidung;
+
+                    using (var db = new RoommateManagerContext())
+                    {
+                        var thongBao = db.Thongbaos.FirstOrDefault(t => t.Noidung == noiDung);
+                        if (thongBao != null)
+                        {
+                            thongBao.Daxoa = true;
+                            db.SaveChanges();
+                            btnModeStatus_Click(null, null);
+                            RefreshNotificationBadge();
+                        }
+                    }
+                }
+                catch (Exception ex) { MessageBox.Show("Lỗi khi xóa: " + ex.Message); }
             }
         }
+
+        private void BtnAddMember_Click(object sender, RoutedEventArgs e) { }
+        private void MemberCard_RightClick(object sender, MouseButtonEventArgs e) { }
     }
 }

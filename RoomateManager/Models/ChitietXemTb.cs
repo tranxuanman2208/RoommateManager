@@ -12,8 +12,6 @@ public partial class ChitietXemTb
     public int Matb { get; set; }
     public string Matv { get; set; } = null!;
     public bool? Dadoc { get; set; }
-
-    // Các liên kết nếu cần
     public virtual Thongbao? MatbNavigation { get; set; }
     public virtual Thanhvien? MatvNavigation { get; set; }
 }
