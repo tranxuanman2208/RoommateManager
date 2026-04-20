@@ -53,6 +53,9 @@ namespace RoommateManager
                     Navigate(btn, new XuLyViPhamPage()); break;
                 default:
                     Navigate(btn, new MemberListPage(this)); break;
+                case "VatDung":
+                    Navigate(btn, new VatDungPage());break;
+              
             }
         }
 

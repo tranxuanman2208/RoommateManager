@@ -16,4 +16,11 @@ public partial class Vatdung
     public bool? Baoduong { get; set; }
 
     public virtual Nha? ManhaNavigation { get; set; }
+
+    public DateTime? Ngaytao { get; set; }
+
+    public string? Hinhanh { get; set; }
+
+    public string? Ghichu { get; set; }
+
 }
