@@ -52,49 +52,50 @@
                         Background="Transparent" BorderThickness="0" Foreground="White">
                     <StackPanel HorizontalAlignment="Center">
                         <TextBlock Text="📅" FontSize="20" HorizontalAlignment="Center"/>
-                        <TextBlock Text="Lịch" FontSize="10" HorizontalAlignment="Center"/>
-                    </StackPanel>
-                </Button>
+    <TextBlock Text="Lịch" FontSize="10" HorizontalAlignment="Center"/>
+</StackPanel>
+</Button>
 
-                <Button Grid.Column="3" x:Name="BtnTask" Click="NavBtn_Click" Tag="Task" 
+<Button Grid.Column="3" x:Name="BtnTask" Click="NavBtn_Click" Tag="Task" 
                         Background="Transparent" BorderThickness="0" Foreground="White">
-                    <StackPanel HorizontalAlignment="Center">
-                        <TextBlock Text="🧹" FontSize="20" HorizontalAlignment="Center"/>
-                        <TextBlock Text="Phân công" FontSize="10" HorizontalAlignment="Center"/>
-                    </StackPanel>
-                </Button>
+    <StackPanel HorizontalAlignment="Center">
+        <TextBlock Text="🧹" FontSize="20" HorizontalAlignment="Center"/>
+        <TextBlock Text="Phân công" FontSize="10" HorizontalAlignment="Center"/>
+    </StackPanel>
+</Button>
 
-                <Button Grid.Column="4" x:Name="BtnViolation" Click="NavBtn_Click" Tag="Violation" 
+<Button Grid.Column="4" x:Name="BtnViolation" Click="NavBtn_Click" Tag="Violation" 
                         Background="Transparent" BorderThickness="0" Foreground="White">
-                    <StackPanel HorizontalAlignment="Center">
-                        <TextBlock Text="⚖️" FontSize="20" HorizontalAlignment="Center"/>
-                        <TextBlock Text="Vi phạm" FontSize="10" HorizontalAlignment="Center"/>
-                    </StackPanel>
-                </Button>
+    <StackPanel HorizontalAlignment="Center">
+        <TextBlock Text="⚖️" FontSize="20" HorizontalAlignment="Center"/>
+        <TextBlock Text="Vi phạm" FontSize="10" HorizontalAlignment="Center"/>
+    </StackPanel>
+</Button>
 
-                <Button Grid.Column="5" x:Name="BtnBaoCao" Click="NavBtn_Click" Tag="BaoCao"
+<Button Grid.Column="5" x:Name="BtnBaoCao" Click="NavBtn_Click" Tag="BaoCao"
         Background="Transparent" BorderThickness="0" Foreground="White">
-                    <StackPanel HorizontalAlignment="Center">
-                        <TextBlock Text="📢" FontSize="20" HorizontalAlignment="Center"/>
-                        <TextBlock Text="Báo cáo" FontSize="10" HorizontalAlignment="Center"/>
-                    </StackPanel>
-                </Button>
-                <Button Grid.Column="6" Click="NavBtn_Click" Tag="VatDung"
+    <StackPanel HorizontalAlignment="Center">
+        <TextBlock Text="📢" FontSize="20" HorizontalAlignment="Center"/>
+        <TextBlock Text="Báo cáo" FontSize="10" HorizontalAlignment="Center"/>
+    </StackPanel>
+</Button>
+                
+<Button Grid.Column="6" Click="NavBtn_Click" Tag="VatDung"
                         Background="Transparent" BorderThickness="0" Foreground="White">
-                    <StackPanel HorizontalAlignment="Center">
-                        <TextBlock Text="📦" FontSize="20"/>
-                        <TextBlock Text="Vật dụng" FontSize="10"/>
-                    </StackPanel>
-                </Button>
+    <StackPanel HorizontalAlignment="Center">
+        <TextBlock Text="📦" FontSize="20"/>
+        <TextBlock Text="Vật dụng" FontSize="10"/>
+    </StackPanel>
+</Button>
 
-                <Button Grid.Column="7" x:Name="BtnSettings" Click="NavBtn_Click" Tag="Settings"
+<Button Grid.Column="7" x:Name="BtnSettings" Click="NavBtn_Click" Tag="Settings"
                         Background="Transparent" BorderThickness="0" Foreground="White">
-                    <StackPanel HorizontalAlignment="Center">
-                        <TextBlock Text="⚙️" FontSize="20" HorizontalAlignment="Center"/>
-                        <TextBlock Text="Cài đặt" FontSize="10" HorizontalAlignment="Center"/>
-                    </StackPanel>
-                </Button>
-            </Grid>
-        </Border>
-    </Grid>
+    <StackPanel HorizontalAlignment="Center">
+        <TextBlock Text="⚙️" FontSize="20" HorizontalAlignment="Center"/>
+        <TextBlock Text="Cài đặt" FontSize="10" HorizontalAlignment="Center"/>
+    </StackPanel>
+</Button>
+</Grid>
+</Border>
+</Grid>
 </Window>

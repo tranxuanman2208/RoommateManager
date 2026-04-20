@@ -29,6 +29,8 @@ public partial class RoommateManagerContext : DbContext
 
     public virtual DbSet<Phancong> Phancongs { get; set; }
 
+    public virtual DbSet<SuCo> SuCos { get; set; }
+
     public virtual DbSet<Thanhvien> Thanhviens { get; set; }
 
     public virtual DbSet<Thongbao> Thongbaos { get; set; }
@@ -39,7 +41,7 @@ public partial class RoommateManagerContext : DbContext
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
 #warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see https://go.microsoft.com/fwlink/?LinkId=723263.
-        => optionsBuilder.UseSqlServer("Data Source=TRANMAN\\MSSQLSERVER02;Initial Catalog=RoommateManager;Integrated Security=True;Encrypt=True;Trust Server Certificate=True");
+        => optionsBuilder.UseSqlServer("Data Source=LAPTOP-V0CC8SPA\\SQLEXPRESS;Initial Catalog=RoommateManager;Integrated Security=True;Trust Server Certificate=True");
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -73,7 +75,7 @@ public partial class RoommateManagerContext : DbContext
 
         modelBuilder.Entity<ChitietXemTb>(entity =>
         {
-            entity.HasKey(e => e.Mact).HasName("PK__CHITIET___603F183A91951B15");
+            entity.HasKey(e => e.Mact).HasName("PK__CHITIET___603F183A92DF96E0");
 
             entity.ToTable("CHITIET_XEM_TB");
 
@@ -98,7 +100,7 @@ public partial class RoommateManagerContext : DbContext
 
         modelBuilder.Entity<Hoadontong>(entity =>
         {
-            entity.HasKey(e => e.Mahdt).HasName("PK__HOADONTO__78C57AA994F6F818");
+            entity.HasKey(e => e.Mahdt).HasName("PK__HOADONTO__78C57AA90FFE2637");
 
             entity.ToTable("HOADONTONG");
 
@@ -108,6 +110,9 @@ public partial class RoommateManagerContext : DbContext
 
             entity.Property(e => e.Mahdt).HasColumnName("MAHDT");
             entity.Property(e => e.Dadong).HasColumnName("DADONG");
+            entity.Property(e => e.Dathongbao)
+                .HasDefaultValue(false)
+                .HasColumnName("DATHONGBAO");
             entity.Property(e => e.Daxoa).HasColumnName("DAXOA");
             entity.Property(e => e.Mancc)
                 .HasMaxLength(10)
@@ -120,6 +125,7 @@ public partial class RoommateManagerContext : DbContext
             entity.Property(e => e.Nam)
                 .HasDefaultValueSql("(datepart(year,getdate()))")
                 .HasColumnName("NAM");
+            entity.Property(e => e.Ngaydenhan).HasColumnName("NGAYDENHAN");
             entity.Property(e => e.Ngaygdt).HasColumnName("NGAYGDT");
             entity.Property(e => e.Ngaygui).HasColumnName("NGAYGUI");
             entity.Property(e => e.Nguoinhan)
@@ -204,7 +210,7 @@ public partial class RoommateManagerContext : DbContext
 
         modelBuilder.Entity<Nha>(entity =>
         {
-            entity.HasKey(e => e.Manha).HasName("PK__NHA__7ABD1CE9A2E37267");
+            entity.HasKey(e => e.Manha).HasName("PK__NHA__7ABD1CE9C3775A11");
 
             entity.ToTable("NHA");
 
@@ -278,6 +284,36 @@ public partial class RoommateManagerContext : DbContext
             entity.HasOne(d => d.NguoithuchienNavigation).WithMany(p => p.PhancongNguoithuchienNavigations)
                 .HasForeignKey(d => d.Nguoithuchien)
                 .HasConstraintName("FK_NGUOITHUCHIEN_IDTHANHVIEN");
+        });
+
+        modelBuilder.Entity<SuCo>(entity =>
+        {
+            entity.HasKey(e => e.Masuco).HasName("PK__SUCO__224EFD8C9294D96C");
+
+            entity.Property(e => e.Masuco).HasColumnName("MASUCO");
+            entity.Property(e => e.Daxoa)
+                .HasDefaultValue(false)
+                .HasColumnName("DAXOA");
+            entity.Property(e => e.Hinhanh)
+                .HasMaxLength(255)
+                .HasColumnName("HINHANH");
+            entity.Property(e => e.Mota)
+                .HasMaxLength(255)
+                .HasColumnName("MOTA");
+            entity.Property(e => e.Ngaytao)
+                .HasDefaultValueSql("(getdate())")
+                .HasColumnType("datetime")
+                .HasColumnName("NGAYTAO");
+            entity.Property(e => e.Nguoitao)
+                .HasMaxLength(10)
+                .IsUnicode(false)
+                .HasColumnName("NGUOITAO");
+            entity.Property(e => e.TenThietbi)
+                .HasMaxLength(100)
+                .HasColumnName("TEN_THIETBI");
+            entity.Property(e => e.Trangthai)
+                .HasMaxLength(50)
+                .HasColumnName("TRANGTHAI");
         });
 
         modelBuilder.Entity<Thanhvien>(entity =>
@@ -366,10 +402,31 @@ public partial class RoommateManagerContext : DbContext
             entity.Property(e => e.Mavatdung).HasColumnName("MAVATDUNG");
             entity.Property(e => e.Baoduong).HasColumnName("BAODUONG");
             entity.Property(e => e.Dabo).HasColumnName("DABO");
+            entity.Property(e => e.Ghichu)
+                .HasMaxLength(255)
+                .HasColumnName("GHICHU");
+            entity.Property(e => e.Hinhanh)
+                .HasMaxLength(255)
+                .HasColumnName("HINHANH");
             entity.Property(e => e.Manha)
                 .HasMaxLength(10)
                 .IsUnicode(false)
                 .HasColumnName("MANHA");
+            entity.Property(e => e.Ngaycapnhat)
+                .HasColumnType("datetime")
+                .HasColumnName("NGAYCAPNHAT");
+            entity.Property(e => e.Ngaytao)
+                .HasDefaultValueSql("(getdate())")
+                .HasColumnType("datetime")
+                .HasColumnName("NGAYTAO");
+            entity.Property(e => e.Nguoicapnhat)
+                .HasMaxLength(10)
+                .IsUnicode(false)
+                .HasColumnName("NGUOICAPNHAT");
+            entity.Property(e => e.Nguoitao)
+                .HasMaxLength(10)
+                .IsUnicode(false)
+                .HasColumnName("NGUOITAO");
             entity.Property(e => e.Tenvd)
                 .HasMaxLength(50)
                 .HasColumnName("TENVD");
