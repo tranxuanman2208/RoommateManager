@@ -1,15 +1,17 @@
 ﻿using System;
-using System.Data;
-using Microsoft.Data.SqlClient;
-using System.Threading.Tasks;
+using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
+using Microsoft.EntityFrameworkCore;
+using System.Threading.Tasks;
+using System.Collections.Generic;
 
 namespace RoomateManager
 {
     public partial class BaoCaoPage : Page
     {
-        private readonly string connStr = @"Data Source=localhost\SQLEXPRESS;Initial Catalog=RoommateManager;Integrated Security=True;TrustServerCertificate=True;";
+        // Khởi tạo Context của EF Core
+        private readonly AppDbContext _db = new AppDbContext();
 
         public BaoCaoPage()
         {
@@ -21,17 +23,11 @@ namespace RoomateManager
         {
             try
             {
-                using (SqlConnection conn = new SqlConnection(connStr))
-                {
-                    conn.Open();
-                    SqlDataAdapter da = new SqlDataAdapter("SELECT ID, TEN FROM THANHVIEN", conn);
-                    DataTable dt = new DataTable();
-                    da.Fill(dt);
-                    cbNguoiBao.ItemsSource = dt.DefaultView;
-                    cbChonNguoiVP.ItemsSource = dt.DefaultView;
-                }
+                var listTV = _db.ThanhViens.ToList();
+                cbNguoiBao.ItemsSource = listTV;
+                cbChonNguoiVP.ItemsSource = listTV;
             }
-            catch (Exception ex) { MessageBox.Show("Lỗi load dữ liệu: " + ex.Message); }
+            catch (Exception ex) { MessageBox.Show("Lỗi EF Core: " + ex.Message); }
         }
 
         private async void btnGui_Click(object sender, RoutedEventArgs e)
@@ -45,116 +41,106 @@ namespace RoomateManager
 
             try
             {
-                using (SqlConnection conn = new SqlConnection(connStr))
+                var bc = new BaoCao
                 {
-                    await conn.OpenAsync();
-                    string sql = "INSERT INTO BAOCAO (NOIDUNG, NGUOIBC, NGAYBC, DAXULY, DAXOA) VALUES (@c, @u, GETDATE(), 0, 0)";
-                    SqlCommand cmd = new SqlCommand(sql, conn);
-                    cmd.Parameters.AddWithValue("@c", noiDungLuu);
-                    cmd.Parameters.AddWithValue("@u", cbNguoiBao.SelectedValue.ToString());
-                    await cmd.ExecuteNonQueryAsync();
-                    MessageBox.Show("Đã gửi báo cáo vi phạm!");
-                    txtTieuDe.Clear(); txtNoiDung.Clear();
-                }
+                    NOIDUNG = noiDungLuu,
+                    NGUOIBC = cbNguoiBao.SelectedValue.ToString(),
+                    NGAYBC = DateTime.Now,
+                    DAXULY = false,
+                    DAXOA = false,
+                    TIEUDE = txtTieuDe.Text.Trim()
+                };
+
+                _db.BaoCaos.Add(bc);
+                await _db.SaveChangesAsync();
+
+                MessageBox.Show("Đã gửi báo cáo vi phạm!");
+                txtTieuDe.Clear(); txtNoiDung.Clear();
             }
-            catch (Exception ex) { MessageBox.Show("Lỗi: " + ex.Message); }
+            catch (Exception ex) { MessageBox.Show("Lỗi lưu EF: " + ex.Message); }
         }
 
         private async Task LoadBangTin()
         {
             try
             {
-                using (SqlConnection conn = new SqlConnection(connStr))
-                {
-                    await conn.OpenAsync();
-                    string query = "SELECT b.*, t.TEN FROM BAOCAO b JOIN THANHVIEN t ON b.NGUOIBC = t.ID WHERE b.DAXOA = 0 ORDER BY b.NGAYBC DESC";
-                    SqlDataAdapter da = new SqlDataAdapter(query, conn);
-                    DataTable dt = new DataTable();
-                    da.Fill(dt);
+                // Dùng LINQ thay cho chuỗi SQL dài ngoằng
+                var listBC = await _db.BaoCaos
+                    .Where(b => b.DAXOA == false)
+                    .OrderByDescending(b => b.NGAYBC)
+                    .Select(b => new {
+                        b.MABC,
+                        b.NOIDUNG,
+                        b.NGAYBC,
+                        b.DAXULY,
+                        // Xử lý ẩn danh trực tiếp trong lúc load
+                        DisplayName = b.NOIDUNG.Contains("[AN_DANH]") ? "👤 Ẩn danh" : _db.ThanhViens.Where(t => t.ID == b.NGUOIBC).Select(t => t.TEN).FirstOrDefault(),
+                        CleanContent = b.NOIDUNG.Replace("[AN_DANH]", ""),
+                        StatusText = b.DAXULY == true ? "Đã xong" : "Chờ duyệt",
+                        StatusColor = b.DAXULY == true ? "#27AE60" : "#E67E22"
+                    }).ToListAsync();
 
-                    dt.Columns.Add("DisplayName", typeof(string));
-                    dt.Columns.Add("StatusText", typeof(string));
-                    dt.Columns.Add("StatusColor", typeof(string));
-
-                    foreach (DataRow r in dt.Rows)
-                    {
-                        string nd = r["NOIDUNG"].ToString();
-                        r["DisplayName"] = nd.Contains("[AN_DANH]") ? "👤 Ẩn danh" : r["TEN"].ToString();
-                        r["NOIDUNG"] = nd.Replace("[AN_DANH]", "");
-
-                        bool daXuLy = (bool)r["DAXULY"];
-                        r["StatusText"] = daXuLy ? "Đã xong" : "Chờ duyệt";
-                        r["StatusColor"] = daXuLy ? "#27AE60" : "#E67E22";
-                    }
-                    lstBangTin.ItemsSource = dt.DefaultView;
-                }
+                lstBangTin.ItemsSource = listBC;
             }
             catch { }
         }
 
-        // --- CẬP NHẬT MỚI TẠI ĐÂY ---
         private async void btnXacNhanPhat_Click(object sender, RoutedEventArgs e)
         {
-            var row = lstBangTin.SelectedItem as DataRowView;
-            if (row == null || cbChonNguoiVP.SelectedValue == null)
+            var selectedBC = lstBangTin.SelectedItem as dynamic;
+            if (selectedBC == null || cbChonNguoiVP.SelectedValue == null)
             {
                 MessageBox.Show("Hãy chọn báo cáo và người vi phạm!"); return;
             }
+
             try
             {
-                using (SqlConnection conn = new SqlConnection(connStr))
+                int maBC = selectedBC.MABC;
+
+                // 1. Cập nhật trạng thái báo cáo
+                var bc = _db.BaoCaos.Find(maBC);
+                if (bc != null) bc.DAXULY = true;
+
+                // 2. Thêm vào bảng xử lý vi phạm
+                var xl = new XuLyViPham
                 {
-                    await conn.OpenAsync();
-                    SqlTransaction trans = conn.BeginTransaction();
-                    try
-                    {
-                        int maBaoCaoGoc = Convert.ToInt32(row["MABC"]);
+                    NGUOIVIPHAM = cbChonNguoiVP.SelectedValue.ToString(),
+                    NOIDUNG = selectedBC.CleanContent,
+                    MABC = maBC,
+                    NGAYXULY = DateTime.Now,
+                    DONE = false,
+                    DAXOA = false
+                };
+                _db.XuLyViPhams.Add(xl);
 
-                        // 1. Update trạng thái báo cáo
-                        new SqlCommand($"UPDATE BAOCAO SET DAXULY = 1 WHERE MABC = {maBaoCaoGoc}", conn, trans).ExecuteNonQuery();
+                // 3. Cộng điểm vi phạm (Logic của Tài)
+                var tv = _db.ThanhViens.Find(cbChonNguoiVP.SelectedValue.ToString());
+                if (tv != null) tv.DIEMVIPHAM = (tv.DIEMVIPHAM ?? 0) + 1;
 
-                        // 2. Chèn vào XULYVIPHAM kèm mã báo cáo liên kết (MABC)
-                        string sqlPhat = @"INSERT INTO XULYVIPHAM (NGUOIVIPHAM, NOIDUNG, MABC, NGAYXULY, DONE, DAXOA) 
-                                           VALUES (@idVP, @nd, @maBC, GETDATE(), 0, 0)";
-
-                        SqlCommand cmdPhat = new SqlCommand(sqlPhat, conn, trans);
-                        cmdPhat.Parameters.AddWithValue("@idVP", cbChonNguoiVP.SelectedValue.ToString());
-                        cmdPhat.Parameters.AddWithValue("@nd", row["NOIDUNG"].ToString());
-                        cmdPhat.Parameters.AddWithValue("@maBC", maBaoCaoGoc);
-                        cmdPhat.ExecuteNonQuery();
-
-                        // 3. Cộng điểm vi phạm (Giữ nguyên logic cũ của Tài)
-                        new SqlCommand($"UPDATE THANHVIEN SET DIEMVIPHAM = ISNULL(DIEMVIPHAM,0) + 1 WHERE ID = '{cbChonNguoiVP.SelectedValue}'", conn, trans).ExecuteNonQuery();
-
-                        trans.Commit();
-                        await LoadBangTin();
-                        MessageBox.Show("Đã xác nhận phạt và lưu liên kết minh chứng!");
-                    }
-                    catch { trans.Rollback(); throw; }
-                }
+                await _db.SaveChangesAsync();
+                await LoadBangTin();
+                MessageBox.Show("Đã xác nhận phạt thành công!");
             }
-            catch (Exception ex) { MessageBox.Show("Lỗi: " + ex.Message); }
+            catch (Exception ex) { MessageBox.Show("Lỗi xử lý: " + ex.Message); }
         }
 
         private async void btnXoa_Click(object sender, RoutedEventArgs e)
         {
-            var row = lstBangTin.SelectedItem as DataRowView;
-            if (row == null) return;
-            using (SqlConnection conn = new SqlConnection(connStr))
+            var selectedBC = lstBangTin.SelectedItem as dynamic;
+            if (selectedBC == null) return;
+
+            var bc = _db.BaoCaos.Find((int)selectedBC.MABC);
+            if (bc != null)
             {
-                await conn.OpenAsync();
-                new SqlCommand($"UPDATE BAOCAO SET DAXOA = 1 WHERE MABC = {row["MABC"]}", conn).ExecuteNonQuery();
+                bc.DAXOA = true;
+                await _db.SaveChangesAsync();
+                await LoadBangTin();
             }
-            await LoadBangTin();
         }
 
         private void TabItem_Selected(object sender, RoutedEventArgs e)
         {
-            var tab = sender as TabItem;
-            if (tab != null && tab.Header.ToString().Contains("Bảng tin"))
-            {
-                _ = LoadBangTin();
-            }
+            _ = LoadBangTin();
         }
     }
 }

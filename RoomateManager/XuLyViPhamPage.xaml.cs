@@ -1,16 +1,16 @@
 ﻿using System;
-using System.Data;
-using Microsoft.Data.SqlClient;
+using System.Linq;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Media;
+using Microsoft.EntityFrameworkCore;
 
 namespace RoomateManager
 {
     public partial class XuLyViPhamPage : Page
     {
-        private readonly string connStr = @"Data Source=localhost\SQLEXPRESS;Initial Catalog=RoommateManager;Integrated Security=True;TrustServerCertificate=True;";
+        // Khởi tạo context dùng chung
+        private readonly AppDbContext _db = new AppDbContext();
 
         public XuLyViPhamPage()
         {
@@ -22,36 +22,28 @@ namespace RoomateManager
         {
             try
             {
-                using (SqlConnection conn = new SqlConnection(connStr))
-                {
-                    await conn.OpenAsync();
+                // Load danh sách thành viên cho ComboBox bằng LINQ
+                cbThanhVien.ItemsSource = await _db.ThanhViens.ToListAsync();
 
-                    SqlCommand cmdTV = new SqlCommand("SELECT ID, TEN FROM THANHVIEN WHERE CON = 1", conn);
-                    SqlDataAdapter daTV = new SqlDataAdapter(cmdTV);
-                    DataTable dtTV = new DataTable();
-                    daTV.Fill(dtTV);
-                    cbThanhVien.ItemsSource = dtTV.DefaultView;
+                // Load danh sách vi phạm bằng LINQ Join
+                var data = await (from vp in _db.XuLyViPhams
+                                  join tv in _db.ThanhViens on vp.NGUOIVIPHAM equals tv.ID
+                                  where vp.DAXOA == false
+                                  orderby vp.NGAYXULY descending
+                                  select new
+                                  {
+                                      vp.MAVIPHAM,
+                                      vp.NGUOIVIPHAM,
+                                      vp.NOIDUNG,
+                                      vp.NGAYXULY,
+                                      vp.DONE,
+                                      vp.MABC,
+                                      TenNguoiVP = tv.TEN,
+                                      StatusText = (vp.DONE == true) ? "Đã xong" : "Đang chờ",
+                                      StatusColor = (vp.DONE == true) ? "#27AE60" : "#E67E22"
+                                  }).ToListAsync();
 
-                    // Đảm bảo query lấy vp.* để có cột MABC
-                    string query = @"SELECT vp.*, tv.TEN as TenNguoiVP 
-                                     FROM XULYVIPHAM vp 
-                                     LEFT JOIN THANHVIEN tv ON vp.NGUOIVIPHAM = tv.ID 
-                                     WHERE vp.DAXOA = 0 ORDER BY vp.NGAYXULY DESC";
-
-                    SqlDataAdapter daVP = new SqlDataAdapter(query, conn);
-                    DataTable dtVP = new DataTable();
-                    await Task.Run(() => daVP.Fill(dtVP));
-
-                    dtVP.Columns.Add("StatusText", typeof(string));
-                    dtVP.Columns.Add("StatusColor", typeof(string));
-                    foreach (DataRow r in dtVP.Rows)
-                    {
-                        bool isDone = r["DONE"] != DBNull.Value && (bool)r["DONE"];
-                        r["StatusText"] = isDone ? "Đã xong" : "Đang chờ";
-                        r["StatusColor"] = isDone ? "#27AE60" : "#E67E22";
-                    }
-                    lstViPham.ItemsSource = dtVP.DefaultView;
-                }
+                lstViPham.ItemsSource = data;
             }
             catch (Exception ex)
             {
@@ -68,17 +60,18 @@ namespace RoomateManager
 
             try
             {
-                using (SqlConnection conn = new SqlConnection(connStr))
+                var newVP = new XuLyViPham
                 {
-                    await conn.OpenAsync();
-                    // Lưu trực tiếp không qua báo cáo nên MABC sẽ để NULL (mặc định)
-                    string sql = "INSERT INTO XULYVIPHAM (NGUOIVIPHAM, NOIDUNG, NGAYXULY, DONE, DAXOA) VALUES (@id, @nd, GETDATE(), 0, 0)";
-                    SqlCommand cmd = new SqlCommand(sql, conn);
-                    cmd.Parameters.Add("@id", SqlDbType.VarChar, 10).Value = cbThanhVien.SelectedValue.ToString();
-                    cmd.Parameters.Add("@nd", SqlDbType.NVarChar, 200).Value = txtNoiDung.Text.Trim();
+                    NGUOIVIPHAM = cbThanhVien.SelectedValue.ToString(),
+                    NOIDUNG = txtNoiDung.Text.Trim(),
+                    NGAYXULY = DateTime.Now,
+                    DONE = false,
+                    DAXOA = false
+                };
 
-                    await cmd.ExecuteNonQueryAsync();
-                }
+                _db.XuLyViPhams.Add(newVP);
+                await _db.SaveChangesAsync();
+
                 txtNoiDung.Clear();
                 await LoadData();
                 MessageBox.Show("Ghi nhận vi phạm thành công!");
@@ -88,75 +81,64 @@ namespace RoomateManager
 
         private async void btnDone_Click(object sender, RoutedEventArgs e)
         {
-            var row = lstViPham.SelectedItem as DataRowView;
-            if (row == null) return;
+            var selected = lstViPham.SelectedItem as dynamic;
+            if (selected == null) return;
 
             try
             {
-                using (SqlConnection conn = new SqlConnection(connStr))
+                int ma = selected.MAVIPHAM;
+                var vp = await _db.XuLyViPhams.FindAsync(ma);
+                if (vp != null)
                 {
-                    await conn.OpenAsync();
-                    string sql = "UPDATE XULYVIPHAM SET DONE = 1 WHERE MAVIPHAM = @ma";
-                    SqlCommand cmd = new SqlCommand(sql, conn);
-                    cmd.Parameters.AddWithValue("@ma", row["MAVIPHAM"]);
-                    await cmd.ExecuteNonQueryAsync();
+                    vp.DONE = true;
+                    await _db.SaveChangesAsync();
+                    await LoadData();
                 }
-                await LoadData();
             }
             catch (Exception ex) { MessageBox.Show(ex.Message); }
         }
 
         private async void btnDelete_Click(object sender, RoutedEventArgs e)
         {
-            var row = lstViPham.SelectedItem as DataRowView;
-            if (row == null) return;
+            var selected = lstViPham.SelectedItem as dynamic;
+            if (selected == null) return;
 
             if (MessageBox.Show("Xóa bản ghi này?", "Xác nhận", MessageBoxButton.YesNo) == MessageBoxResult.Yes)
             {
                 try
                 {
-                    using (SqlConnection conn = new SqlConnection(connStr))
+                    int ma = selected.MAVIPHAM;
+                    var vp = await _db.XuLyViPhams.FindAsync(ma);
+                    if (vp != null)
                     {
-                        await conn.OpenAsync();
-                        string sql = "UPDATE XULYVIPHAM SET DAXOA = 1 WHERE MAVIPHAM = @ma";
-                        SqlCommand cmd = new SqlCommand(sql, conn);
-                        cmd.Parameters.AddWithValue("@ma", row["MAVIPHAM"]);
-                        await cmd.ExecuteNonQueryAsync();
+                        vp.DAXOA = true;
+                        await _db.SaveChangesAsync();
+                        await LoadData();
                     }
-                    await LoadData();
                 }
                 catch (Exception ex) { MessageBox.Show(ex.Message); }
             }
         }
 
-        // --- CẬP NHẬT MỚI TẠI ĐÂY ---
         private async void btnXemBaoCao_Click(object sender, RoutedEventArgs e)
         {
-            var row = lstViPham.SelectedItem as DataRowView;
+            var selected = lstViPham.SelectedItem as dynamic;
 
-            if (row == null || row["MABC"] == DBNull.Value || string.IsNullOrEmpty(row["MABC"].ToString()))
+            if (selected == null || selected.MABC == null)
             {
                 MessageBox.Show("Vi phạm này được ghi nhận trực tiếp, không có báo cáo gốc liên kết!", "Thông báo");
                 return;
             }
 
-            string maBC = row["MABC"].ToString();
-            string noiDungGoc = "Không tìm thấy nội dung...";
-
             try
             {
-                using (SqlConnection conn = new SqlConnection(connStr))
-                {
-                    await conn.OpenAsync();
-                    string sql = "SELECT NOIDUNG FROM BAOCAO WHERE MABC = @ma";
-                    SqlCommand cmd = new SqlCommand(sql, conn);
-                    cmd.Parameters.AddWithValue("@ma", maBC);
+                int maBC = selected.MABC;
+                // Dùng LINQ tìm nội dung báo cáo
+                var bc = await _db.BaoCaos.FindAsync(maBC);
+                string noiDungGoc = bc?.NOIDUNG ?? "Không tìm thấy nội dung...";
 
-                    var result = await cmd.ExecuteScalarAsync();
-                    if (result != null) noiDungGoc = result.ToString();
-                }
-
-                MinhChungWindow popup = new MinhChungWindow(maBC, noiDungGoc);
+                // Hiển thị Popup 
+                MinhChungWindow popup = new MinhChungWindow(maBC.ToString(), noiDungGoc);
                 popup.ShowDialog();
             }
             catch (Exception ex) { MessageBox.Show("Lỗi truy xuất: " + ex.Message); }
