@@ -55,6 +55,9 @@ namespace RoommateManager
                     MainFrame.Navigate(new BaoCaoPage());break;
                 default:
                     Navigate(btn, new MemberListPage(this)); break;
+                case "VatDung":
+                    Navigate(btn, new VatDungPage());break;
+              
             }
         }
 
