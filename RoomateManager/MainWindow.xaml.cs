@@ -51,6 +51,8 @@ namespace RoommateManager
                     Navigate(btn, new PhanCongPage()); break;
                 case "Violation":
                     Navigate(btn, new XuLyViPhamPage()); break;
+                case "BaoCao": 
+                    MainFrame.Navigate(new BaoCaoPage());break;
                 default:
                     Navigate(btn, new MemberListPage(this)); break;
             }

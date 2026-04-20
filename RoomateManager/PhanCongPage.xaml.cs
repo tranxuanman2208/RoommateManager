@@ -31,7 +31,7 @@ namespace RoomateManager
                 using (var db = new RoommateManagerContext())
                 {
                     var members = db.Thanhviens
-                                    .Where(tv => tv.Con == true) 
+                                    .Where(tv => tv.Con == true) // bit trong SQL là bool
                                     .Select(tv => new ThanhVienVM
                                     {
                                         ID = tv.Id,
@@ -108,7 +108,7 @@ namespace RoomateManager
                         {
                             Tencv = dlg.TaskName ?? "Nhiệm vụ mới",
                             Nguoithuchien = idUser,
-                            Ngayth = DateOnly.FromDateTime(DateTime.Now),
+                            Ngayth = DateOnly.FromDateTime(DateTime.Now), // SQL date -> DateOnly
                             Dalam = false,
                             Daxoa = false
                         };

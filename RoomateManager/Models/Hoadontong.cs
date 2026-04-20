@@ -29,7 +29,11 @@ public partial class Hoadontong
 
     public short Nam { get; set; }
 
+    public string? Mancc { get; set; }
+
     public virtual ICollection<Hoadontv> Hoadontvs { get; set; } = new List<Hoadontv>();
+
+    public virtual Nhacungcap? ManccNavigation { get; set; }
 
     public virtual Nha? ManhaNavigation { get; set; }
 }
