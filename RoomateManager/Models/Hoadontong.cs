@@ -31,6 +31,10 @@ public partial class Hoadontong
 
     public string? Mancc { get; set; }
 
+    public DateOnly? Ngaydenhan { get; set; }
+
+    public bool? Dathongbao { get; set; }
+
     public virtual ICollection<Hoadontv> Hoadontvs { get; set; } = new List<Hoadontv>();
 
     public virtual Nhacungcap? ManccNavigation { get; set; }

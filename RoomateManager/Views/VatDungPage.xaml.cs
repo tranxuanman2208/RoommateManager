@@ -109,7 +109,7 @@ namespace RoommateManager.Views
             }
         }
 
-        // ================= XÓA =================
+        //  XÓA 
         private void Delete_Click(object sender, RoutedEventArgs e)
         {
             var selected = gridVatDung.SelectedItem as Vatdung;

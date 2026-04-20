@@ -1,4 +1,6 @@
 ﻿using RoomateManager;
+using RoomateManager.Models;
+
 using RoommateManager.Views;
 using System;
 using System.Collections.Generic;
@@ -18,6 +20,8 @@ namespace RoommateManager
             InitializeComponent();
             // Đăng ký sự kiện Loaded để đảm bảo UI đã sẵn sàng trước khi Navigate
             this.Loaded += MainWindow_Loaded;
+           
+          
         }
 
         private void MainWindow_Loaded(object sender, RoutedEventArgs e)
@@ -51,13 +55,11 @@ namespace RoommateManager
                     Navigate(btn, new PhanCongPage()); break;
                 case "Violation":
                     Navigate(btn, new XuLyViPhamPage()); break;
-                case "BaoCao": 
-                    MainFrame.Navigate(new BaoCaoPage());break;
+                case "VatDung":
+                    Navigate(btn, new VatDungPage()); break;
                 default:
                     Navigate(btn, new MemberListPage(this)); break;
-                case "VatDung":
-                    Navigate(btn, new VatDungPage());break;
-              
+                
             }
         }
 
@@ -79,7 +81,14 @@ namespace RoommateManager
             _activeBtn = activeBtn;
             MainFrame.Navigate(page);
         }
+      void LoadThongBaoCount()
+      {
+        var count = new RoommateManagerContext()
+            .Thongbaos
+             .Count(x => x.Dadoc != true && x.Daxoa != true);
 
+      
+     }
         private UIElementCollection? GetNavigationButtons()
         {
             try
