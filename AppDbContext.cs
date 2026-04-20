@@ -26,7 +26,7 @@ namespace RoomateManager
         [Key]
         public string ID { get; set; }
         public string TEN { get; set; }
-        public int? DIEMVIPHAM { get; set; } // Cột này Tài thêm vào DB để lưu điểm phạt nhé
+        public int? DIEMVIPHAM { get; set; } 
     }
 
     // Định nghĩa bảng BAOCAO
