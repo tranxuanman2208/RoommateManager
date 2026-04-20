@@ -27,6 +27,8 @@ public partial class Thanhvien
 
     public string? Username { get; set; }
 
+    public int? Diemvipham { get; set; }
+
     public virtual ICollection<Baocao> Baocaos { get; set; } = new List<Baocao>();
 
     public virtual ICollection<Hoadontv> HoadontvNguoichuyenNavigations { get; set; } = new List<Hoadontv>();

@@ -14,17 +14,11 @@ using System.Windows.Shapes;
 
 namespace RoomateManager
 {
-    /// <summary>
-    /// Interaction logic for MinhChungWindow.xaml
-    /// </summary>
     public partial class MinhChungWindow : Window
     {
         public MinhChungWindow(string? ma, string? noidung)
         {
             InitializeComponent();
-            txtMaBC.Text = ma;
-            txtNoiDungGoc.Text = noidung;
-
         }
         private void Button_Click(object sender, RoutedEventArgs e) => this.Close();
         

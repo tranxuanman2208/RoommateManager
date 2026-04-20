@@ -5,14 +5,12 @@ using System.Windows.Controls;
 using Microsoft.EntityFrameworkCore;
 using System.Threading.Tasks;
 using System.Collections.Generic;
+using RoomateManager.Models;
 
 namespace RoomateManager
 {
     public partial class BaoCaoPage : Page
     {
-        // Khởi tạo Context của EF Core
-        private readonly AppDbContext _db = new AppDbContext();
-
         public BaoCaoPage()
         {
             InitializeComponent();
@@ -23,66 +21,95 @@ namespace RoomateManager
         {
             try
             {
-                var listTV = _db.ThanhViens.ToList();
-                cbNguoiBao.ItemsSource = listTV;
-                cbChonNguoiVP.ItemsSource = listTV;
+                using (var db = new RoommateManagerContext())
+                {
+                    // Lấy danh sách thành viên còn ở (Con == true)
+                    var listTV = db.Thanhviens.Where(tv => tv.Con == true).ToList();
+                    cbNguoiBao.ItemsSource = listTV;
+                    cbChonNguoiVP.ItemsSource = listTV;
+
+                    // Thiết lập hiển thị cho ComboBox
+                    cbNguoiBao.DisplayMemberPath = "Ten";
+                    cbNguoiBao.SelectedValuePath = "Id";
+                    cbChonNguoiVP.DisplayMemberPath = "Ten";
+                    cbChonNguoiVP.SelectedValuePath = "Id";
+                }
             }
-            catch (Exception ex) { MessageBox.Show("Lỗi EF Core: " + ex.Message); }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Lỗi tải dữ liệu ban đầu: " + ex.Message);
+            }
         }
 
         private async void btnGui_Click(object sender, RoutedEventArgs e)
         {
             if (cbNguoiBao.SelectedValue == null || string.IsNullOrWhiteSpace(txtNoiDung.Text))
             {
-                MessageBox.Show("Vui lòng nhập đầy đủ thông tin!"); return;
+                MessageBox.Show("Vui lòng nhập đầy đủ thông tin!");
+                return;
             }
 
+            // Xử lý nội dung ẩn danh
             string noiDungLuu = $"[{txtTieuDe.Text.Trim()}] {txtNoiDung.Text.Trim()}" + (chkAnDanh.IsChecked == true ? " [AN_DANH]" : "");
 
             try
             {
-                var bc = new BaoCao
+                using (var db = new RoommateManagerContext())
                 {
-                    NOIDUNG = noiDungLuu,
-                    NGUOIBC = cbNguoiBao.SelectedValue.ToString(),
-                    NGAYBC = DateTime.Now,
-                    DAXULY = false,
-                    DAXOA = false,
-                    TIEUDE = txtTieuDe.Text.Trim()
-                };
+                    var bc = new Baocao
+                    {
+                        Noidung = noiDungLuu,
+                        Nguoibc = cbNguoiBao.SelectedValue.ToString(),
+                        Ngaybc = DateOnly.FromDateTime(DateTime.Now), // SQL date tương ứng DateOnly
+                        Daxuly = false,
+                        Daxoa = false,
+                        Tieude = txtTieuDe.Text.Trim()
+                    };
 
-                _db.BaoCaos.Add(bc);
-                await _db.SaveChangesAsync();
+                    db.Baocaos.Add(bc);
+                    await db.SaveChangesAsync();
 
-                MessageBox.Show("Đã gửi báo cáo vi phạm!");
-                txtTieuDe.Clear(); txtNoiDung.Clear();
+                    MessageBox.Show("Đã gửi báo cáo vi phạm!");
+                    txtTieuDe.Clear();
+                    txtNoiDung.Clear();
+                }
             }
-            catch (Exception ex) { MessageBox.Show("Lỗi lưu EF: " + ex.Message); }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Lỗi gửi báo cáo: " + ex.Message);
+            }
         }
 
         private async Task LoadBangTin()
         {
             try
             {
-                // Dùng LINQ thay cho chuỗi SQL dài ngoằng
-                var listBC = await _db.BaoCaos
-                    .Where(b => b.DAXOA == false)
-                    .OrderByDescending(b => b.NGAYBC)
-                    .Select(b => new {
-                        b.MABC,
-                        b.NOIDUNG,
-                        b.NGAYBC,
-                        b.DAXULY,
-                        // Xử lý ẩn danh trực tiếp trong lúc load
-                        DisplayName = b.NOIDUNG.Contains("[AN_DANH]") ? "👤 Ẩn danh" : _db.ThanhViens.Where(t => t.ID == b.NGUOIBC).Select(t => t.TEN).FirstOrDefault(),
-                        CleanContent = b.NOIDUNG.Replace("[AN_DANH]", ""),
-                        StatusText = b.DAXULY == true ? "Đã xong" : "Chờ duyệt",
-                        StatusColor = b.DAXULY == true ? "#27AE60" : "#E67E22"
-                    }).ToListAsync();
+                using (var db = new RoommateManagerContext())
+                {
+                    var listBC = await db.Baocaos
+                        .Where(b => b.Daxoa == false || b.Daxoa == null)
+                        .OrderByDescending(b => b.Ngaybc)
+                        .Select(b => new {
+                            b.Mabc,
+                            b.Noidung,
+                            b.Ngaybc,
+                            b.Daxuly,
+                            // Xử lý hiển thị tên người báo cáo hoặc ẩn danh bằng LINQ
+                            DisplayName = b.Noidung.Contains("[AN_DANH]")
+                                          ? "👤 Ẩn danh"
+                                          : db.Thanhviens.Where(t => t.Id == b.Nguoibc).Select(t => t.Ten).FirstOrDefault(),
+                            CleanContent = b.Noidung.Replace("[AN_DANH]", ""),
+                            StatusText = b.Daxuly == true ? "Đã xong" : "Chờ duyệt",
+                            StatusColor = b.Daxuly == true ? "#27AE60" : "#E67E22"
+                        }).ToListAsync();
 
-                lstBangTin.ItemsSource = listBC;
+                    lstBangTin.ItemsSource = listBC;
+                }
             }
-            catch { }
+            catch (Exception ex)
+            {
+                // Có thể log lỗi ở đây nếu cần
+            }
         }
 
         private async void btnXacNhanPhat_Click(object sender, RoutedEventArgs e)
@@ -90,38 +117,43 @@ namespace RoomateManager
             var selectedBC = lstBangTin.SelectedItem as dynamic;
             if (selectedBC == null || cbChonNguoiVP.SelectedValue == null)
             {
-                MessageBox.Show("Hãy chọn báo cáo và người vi phạm!"); return;
+                MessageBox.Show("Hãy chọn báo cáo và người vi phạm!");
+                return;
             }
 
             try
             {
-                int maBC = selectedBC.MABC;
+                int maBC = selectedBC.Mabc;
 
-                // 1. Cập nhật trạng thái báo cáo
-                var bc = _db.BaoCaos.Find(maBC);
-                if (bc != null) bc.DAXULY = true;
-
-                // 2. Thêm vào bảng xử lý vi phạm
-                var xl = new XuLyViPham
+                using (var db = new RoommateManagerContext())
                 {
-                    NGUOIVIPHAM = cbChonNguoiVP.SelectedValue.ToString(),
-                    NOIDUNG = selectedBC.CleanContent,
-                    MABC = maBC,
-                    NGAYXULY = DateTime.Now,
-                    DONE = false,
-                    DAXOA = false
-                };
-                _db.XuLyViPhams.Add(xl);
+                    // 1. Cập nhật trạng thái báo cáo đã được xử lý
+                    var bc = await db.Baocaos.FindAsync(maBC);
+                    if (bc != null) bc.Daxuly = true;
 
-                // 3. Cộng điểm vi phạm (Logic của Tài)
-                var tv = _db.ThanhViens.Find(cbChonNguoiVP.SelectedValue.ToString());
-                if (tv != null) tv.DIEMVIPHAM = (tv.DIEMVIPHAM ?? 0) + 1;
+                    // 2. Thêm bản ghi mới vào bảng xử lý vi phạm
+                    var xl = new Xulyvipham
+                    {
+                        Nguoivipham = cbChonNguoiVP.SelectedValue.ToString(),
+                        Noidung = selectedBC.CleanContent,
+                        Mabc = maBC,
+                        Ngayxuly = DateOnly.FromDateTime(DateTime.Now),
+                        Done = false,
+                        Daxoa = false
+                    };
+                    db.Xulyviphams.Add(xl);
 
-                await _db.SaveChangesAsync();
-                await LoadBangTin();
-                MessageBox.Show("Đã xác nhận phạt thành công!");
+                    // 3. Thực hiện lưu thay đổi
+                    await db.SaveChangesAsync();
+
+                    await LoadBangTin();
+                    MessageBox.Show("Đã xác nhận phạt thành công!");
+                }
             }
-            catch (Exception ex) { MessageBox.Show("Lỗi xử lý: " + ex.Message); }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Lỗi xử lý phạt: " + ex.Message);
+            }
         }
 
         private async void btnXoa_Click(object sender, RoutedEventArgs e)
@@ -129,12 +161,23 @@ namespace RoomateManager
             var selectedBC = lstBangTin.SelectedItem as dynamic;
             if (selectedBC == null) return;
 
-            var bc = _db.BaoCaos.Find((int)selectedBC.MABC);
-            if (bc != null)
+            try
             {
-                bc.DAXOA = true;
-                await _db.SaveChangesAsync();
-                await LoadBangTin();
+                using (var db = new RoommateManagerContext())
+                {
+                    int maBC = (int)selectedBC.Mabc;
+                    var bc = await db.Baocaos.FindAsync(maBC);
+                    if (bc != null)
+                    {
+                        bc.Daxoa = true; // Soft delete
+                        await db.SaveChangesAsync();
+                        await LoadBangTin();
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Lỗi xóa báo cáo: " + ex.Message);
             }
         }
 

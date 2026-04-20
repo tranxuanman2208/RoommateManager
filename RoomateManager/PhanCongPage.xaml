@@ -42,10 +42,6 @@
 
         <StackPanel Grid.Row="0" Margin="0,0,0,20">
             <TextBlock Text="TIẾN ĐỘ VỆ SINH TRONG TUẦN" FontSize="22" FontWeight="Bold" Foreground="#2C3E50"/>
-            <Grid Margin="0,10,0,0">
-                <ProgressBar Name="pgbTienDo" Height="20" Value="10" Maximum="100" Foreground="#27AE60" Background="#D5DBDB"/>
-                <TextBlock Name="txtPhanTram" Text="10% Hoàn thành" HorizontalAlignment="Center" VerticalAlignment="Center" Foreground="#2C3E50" FontWeight="Bold"/>
-            </Grid>
         </StackPanel>
 
         <Grid Grid.Row="1">

@@ -17,11 +17,15 @@ public partial class RoommateManagerContext : DbContext
 
     public virtual DbSet<Baocao> Baocaos { get; set; }
 
+    public virtual DbSet<ChitietXemTb> ChitietXemTbs { get; set; }
+
     public virtual DbSet<Hoadontong> Hoadontongs { get; set; }
 
     public virtual DbSet<Hoadontv> Hoadontvs { get; set; }
 
     public virtual DbSet<Nha> Nhas { get; set; }
+
+    public virtual DbSet<Nhacungcap> Nhacungcaps { get; set; }
 
     public virtual DbSet<Phancong> Phancongs { get; set; }
 
@@ -35,7 +39,7 @@ public partial class RoommateManagerContext : DbContext
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
 #warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see https://go.microsoft.com/fwlink/?LinkId=723263.
-        => optionsBuilder.UseSqlServer("Data Source=TRANMAN\\MSSQLSERVER02;Initial Catalog=RoommateManager;User ID=sa;Password=Mandepzai2208!;Trust Server Certificate=True");
+        => optionsBuilder.UseSqlServer("Data Source=TRANMAN\\MSSQLSERVER02;Initial Catalog=RoommateManager;Integrated Security=True;Encrypt=True;Trust Server Certificate=True");
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -67,9 +71,34 @@ public partial class RoommateManagerContext : DbContext
                 .HasConstraintName("FK_NGUOIBC_IDTHANHVIEN");
         });
 
+        modelBuilder.Entity<ChitietXemTb>(entity =>
+        {
+            entity.HasKey(e => e.Mact).HasName("PK__CHITIET___603F183A91951B15");
+
+            entity.ToTable("CHITIET_XEM_TB");
+
+            entity.Property(e => e.Mact).HasColumnName("MACT");
+            entity.Property(e => e.Dadoc)
+                .HasDefaultValue(false)
+                .HasColumnName("DADOC");
+            entity.Property(e => e.Matb).HasColumnName("MATB");
+            entity.Property(e => e.Matv)
+                .HasMaxLength(10)
+                .IsUnicode(false)
+                .HasColumnName("MATV");
+            entity.Property(e => e.Thoigianxem)
+                .HasColumnType("datetime")
+                .HasColumnName("THOIGIANXEM");
+
+            entity.HasOne(d => d.MatbNavigation).WithMany(p => p.ChitietXemTbs)
+                .HasForeignKey(d => d.Matb)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_CT_THONGBAO");
+        });
+
         modelBuilder.Entity<Hoadontong>(entity =>
         {
-            entity.HasKey(e => e.Mahdt).HasName("PK__HOADONTO__78C57AA9FFDD5362");
+            entity.HasKey(e => e.Mahdt).HasName("PK__HOADONTO__78C57AA994F6F818");
 
             entity.ToTable("HOADONTONG");
 
@@ -80,6 +109,10 @@ public partial class RoommateManagerContext : DbContext
             entity.Property(e => e.Mahdt).HasColumnName("MAHDT");
             entity.Property(e => e.Dadong).HasColumnName("DADONG");
             entity.Property(e => e.Daxoa).HasColumnName("DAXOA");
+            entity.Property(e => e.Mancc)
+                .HasMaxLength(10)
+                .IsUnicode(false)
+                .HasColumnName("MANCC");
             entity.Property(e => e.Manha)
                 .HasMaxLength(10)
                 .IsUnicode(false)
@@ -105,6 +138,10 @@ public partial class RoommateManagerContext : DbContext
             entity.Property(e => e.Thang)
                 .HasDefaultValueSql("(datepart(month,getdate()))")
                 .HasColumnName("THANG");
+
+            entity.HasOne(d => d.ManccNavigation).WithMany(p => p.Hoadontongs)
+                .HasForeignKey(d => d.Mancc)
+                .HasConstraintName("FK_MNCC_HDTONG");
 
             entity.HasOne(d => d.ManhaNavigation).WithMany(p => p.Hoadontongs)
                 .HasForeignKey(d => d.Manha)
@@ -167,7 +204,7 @@ public partial class RoommateManagerContext : DbContext
 
         modelBuilder.Entity<Nha>(entity =>
         {
-            entity.HasKey(e => e.Manha).HasName("PK__NHA__7ABD1CE9814F1F78");
+            entity.HasKey(e => e.Manha).HasName("PK__NHA__7ABD1CE9A2E37267");
 
             entity.ToTable("NHA");
 
@@ -188,6 +225,24 @@ public partial class RoommateManagerContext : DbContext
             entity.Property(e => e.Tp)
                 .HasMaxLength(50)
                 .HasColumnName("TP");
+        });
+
+        modelBuilder.Entity<Nhacungcap>(entity =>
+        {
+            entity.HasKey(e => e.Mancc).HasName("PK_MANCC");
+
+            entity.ToTable("NHACUNGCAP");
+
+            entity.Property(e => e.Mancc)
+                .HasMaxLength(10)
+                .IsUnicode(false)
+                .HasColumnName("MANCC");
+            entity.Property(e => e.Diachi)
+                .HasMaxLength(100)
+                .HasColumnName("DIACHI");
+            entity.Property(e => e.Tenncc)
+                .HasMaxLength(100)
+                .HasColumnName("TENNCC");
         });
 
         modelBuilder.Entity<Phancong>(entity =>
@@ -227,7 +282,7 @@ public partial class RoommateManagerContext : DbContext
 
         modelBuilder.Entity<Thanhvien>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("PK__THANHVIE__3214EC270786DCD1");
+            entity.HasKey(e => e.Id).HasName("PK__THANHVIE__3214EC277F4F6BF8");
 
             entity.ToTable("THANHVIEN");
 
@@ -237,6 +292,7 @@ public partial class RoommateManagerContext : DbContext
                 .HasColumnName("ID");
             entity.Property(e => e.Ad).HasColumnName("AD");
             entity.Property(e => e.Con).HasColumnName("CON");
+            entity.Property(e => e.Diemvipham).HasColumnName("DIEMVIPHAM");
             entity.Property(e => e.Mail)
                 .HasMaxLength(50)
                 .IsUnicode(false)
@@ -270,13 +326,14 @@ public partial class RoommateManagerContext : DbContext
 
         modelBuilder.Entity<Thongbao>(entity =>
         {
-            entity.HasKey(e => e.Matb).HasName("PK__THONGBAO__6023721D2EED3F43");
+            entity.HasKey(e => e.Matb).HasName("PK__THONGBAO__6023721DC6AF483B");
 
             entity.ToTable("THONGBAO");
 
             entity.HasIndex(e => e.Ngaytb, "ID_NGAYTB");
 
             entity.Property(e => e.Matb).HasColumnName("MATB");
+            entity.Property(e => e.Dadoc).HasColumnName("DADOC");
             entity.Property(e => e.Daxoa).HasColumnName("DAXOA");
             entity.Property(e => e.Ngaytb).HasColumnName("NGAYTB");
             entity.Property(e => e.Nguoinhan)
@@ -302,7 +359,7 @@ public partial class RoommateManagerContext : DbContext
 
         modelBuilder.Entity<Vatdung>(entity =>
         {
-            entity.HasKey(e => e.Mavatdung).HasName("PK__VATDUNG__6D9077EFF9E82422");
+            entity.HasKey(e => e.Mavatdung).HasName("PK__VATDUNG__6D9077EF896AF387");
 
             entity.ToTable("VATDUNG");
 

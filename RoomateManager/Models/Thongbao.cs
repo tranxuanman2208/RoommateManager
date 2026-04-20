@@ -17,6 +17,10 @@ public partial class Thongbao
 
     public bool? Daxoa { get; set; }
 
+    public bool? Dadoc { get; set; }
+
+    public virtual ICollection<ChitietXemTb> ChitietXemTbs { get; set; } = new List<ChitietXemTb>();
+
     public virtual Thanhvien? NguoinhanNavigation { get; set; }
 
     public virtual Thanhvien? NguoitbNavigation { get; set; }

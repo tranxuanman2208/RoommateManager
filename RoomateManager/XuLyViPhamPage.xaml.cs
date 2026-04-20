@@ -4,14 +4,12 @@ using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using Microsoft.EntityFrameworkCore;
+using RoomateManager.Models;
 
 namespace RoomateManager
 {
     public partial class XuLyViPhamPage : Page
     {
-        // Khởi tạo context dùng chung
-        private readonly AppDbContext _db = new AppDbContext();
-
         public XuLyViPhamPage()
         {
             InitializeComponent();
@@ -22,28 +20,33 @@ namespace RoomateManager
         {
             try
             {
-                // Load danh sách thành viên cho ComboBox bằng LINQ
-                cbThanhVien.ItemsSource = await _db.ThanhViens.ToListAsync();
+                using (var db = new RoommateManagerContext())
+                {
+                    // 1. Load danh sách thành viên cho ComboBox
+                    cbThanhVien.ItemsSource = await db.Thanhviens
+                                                      .Where(tv => tv.Con == true)
+                                                      .ToListAsync();
 
-                // Load danh sách vi phạm bằng LINQ Join
-                var data = await (from vp in _db.XuLyViPhams
-                                  join tv in _db.ThanhViens on vp.NGUOIVIPHAM equals tv.ID
-                                  where vp.DAXOA == false
-                                  orderby vp.NGAYXULY descending
-                                  select new
-                                  {
-                                      vp.MAVIPHAM,
-                                      vp.NGUOIVIPHAM,
-                                      vp.NOIDUNG,
-                                      vp.NGAYXULY,
-                                      vp.DONE,
-                                      vp.MABC,
-                                      TenNguoiVP = tv.TEN,
-                                      StatusText = (vp.DONE == true) ? "Đã xong" : "Đang chờ",
-                                      StatusColor = (vp.DONE == true) ? "#27AE60" : "#E67E22"
-                                  }).ToListAsync();
+                    // 2. Load danh sách vi phạm bằng LINQ Join và Anonymous Object
+                    var data = await (from vp in db.Xulyviphams
+                                      join tv in db.Thanhviens on vp.Nguoivipham equals tv.Id
+                                      where vp.Daxoa == false || vp.Daxoa == null
+                                      orderby vp.Ngayxuly descending
+                                      select new
+                                      {
+                                          vp.Mavipham,
+                                          vp.Nguoivipham,
+                                          vp.Noidung,
+                                          vp.Ngayxuly,
+                                          vp.Done,
+                                          vp.Mabc,
+                                          TenNguoiVP = tv.Ten,
+                                          StatusText = (vp.Done == true) ? "Đã xong" : "Đang chờ",
+                                          StatusColor = (vp.Done == true) ? "#27AE60" : "#E67E22"
+                                      }).ToListAsync();
 
-                lstViPham.ItemsSource = data;
+                    lstViPham.ItemsSource = data;
+                }
             }
             catch (Exception ex)
             {
@@ -55,47 +58,61 @@ namespace RoomateManager
         {
             if (cbThanhVien.SelectedValue == null || string.IsNullOrWhiteSpace(txtNoiDung.Text))
             {
-                MessageBox.Show("Vui lòng nhập đủ thông tin!"); return;
+                MessageBox.Show("Vui lòng nhập đủ thông tin!");
+                return;
             }
 
             try
             {
-                var newVP = new XuLyViPham
+                using (var db = new RoommateManagerContext())
                 {
-                    NGUOIVIPHAM = cbThanhVien.SelectedValue.ToString(),
-                    NOIDUNG = txtNoiDung.Text.Trim(),
-                    NGAYXULY = DateTime.Now,
-                    DONE = false,
-                    DAXOA = false
-                };
+                    var newVP = new Xulyvipham // Sử dụng tên Model theo scaffold (PascalCase)
+                    {
+                        Nguoivipham = cbThanhVien.SelectedValue.ToString(),
+                        Noidung = txtNoiDung.Text.Trim(),
+                        Ngayxuly = DateOnly.FromDateTime(DateTime.Now), // SQL date tương ứng DateOnly trong EF Core
+                        Done = false,
+                        Daxoa = false
+                    };
 
-                _db.XuLyViPhams.Add(newVP);
-                await _db.SaveChangesAsync();
+                    db.Xulyviphams.Add(newVP);
+                    await db.SaveChangesAsync();
 
-                txtNoiDung.Clear();
-                await LoadData();
-                MessageBox.Show("Ghi nhận vi phạm thành công!");
+                    txtNoiDung.Clear();
+                    await LoadData();
+                    MessageBox.Show("Ghi nhận vi phạm thành công!");
+                }
             }
-            catch (Exception ex) { MessageBox.Show("Lỗi lưu dữ liệu: " + ex.Message); }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Lỗi lưu dữ liệu: " + ex.Message);
+            }
         }
 
         private async void btnDone_Click(object sender, RoutedEventArgs e)
         {
+            // Ép kiểu dynamic để lấy ID từ Anonymous Object trong ListView
             var selected = lstViPham.SelectedItem as dynamic;
             if (selected == null) return;
 
             try
             {
-                int ma = selected.MAVIPHAM;
-                var vp = await _db.XuLyViPhams.FindAsync(ma);
-                if (vp != null)
+                int ma = selected.Mavipham;
+                using (var db = new RoommateManagerContext())
                 {
-                    vp.DONE = true;
-                    await _db.SaveChangesAsync();
-                    await LoadData();
+                    var vp = await db.Xulyviphams.FindAsync(ma);
+                    if (vp != null)
+                    {
+                        vp.Done = true;
+                        await db.SaveChangesAsync();
+                        await LoadData();
+                    }
                 }
             }
-            catch (Exception ex) { MessageBox.Show(ex.Message); }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Lỗi cập nhật: " + ex.Message);
+            }
         }
 
         private async void btnDelete_Click(object sender, RoutedEventArgs e)
@@ -107,16 +124,22 @@ namespace RoomateManager
             {
                 try
                 {
-                    int ma = selected.MAVIPHAM;
-                    var vp = await _db.XuLyViPhams.FindAsync(ma);
-                    if (vp != null)
+                    int ma = selected.Mavipham;
+                    using (var db = new RoommateManagerContext())
                     {
-                        vp.DAXOA = true;
-                        await _db.SaveChangesAsync();
-                        await LoadData();
+                        var vp = await db.Xulyviphams.FindAsync(ma);
+                        if (vp != null)
+                        {
+                            vp.Daxoa = true; // Đánh dấu xóa giả (Soft Delete)
+                            await db.SaveChangesAsync();
+                            await LoadData();
+                        }
                     }
                 }
-                catch (Exception ex) { MessageBox.Show(ex.Message); }
+                catch (Exception ex)
+                {
+                    MessageBox.Show("Lỗi xóa: " + ex.Message);
+                }
             }
         }
 
@@ -124,24 +147,30 @@ namespace RoomateManager
         {
             var selected = lstViPham.SelectedItem as dynamic;
 
-            if (selected == null || selected.MABC == null)
+            if (selected == null || selected.Mabc == null)
             {
-                MessageBox.Show("Vi phạm này được ghi nhận trực tiếp, không có báo cáo gốc liên kết!", "Thông báo");
+                MessageBox.Show("Vi phạm này được ghi nhận trực tiếp, không có báo cáo gốc!", "Thông báo");
                 return;
             }
 
             try
             {
-                int maBC = selected.MABC;
-                // Dùng LINQ tìm nội dung báo cáo
-                var bc = await _db.BaoCaos.FindAsync(maBC);
-                string noiDungGoc = bc?.NOIDUNG ?? "Không tìm thấy nội dung...";
+                int maBC = selected.Mabc;
+                using (var db = new RoommateManagerContext())
+                {
+                    // Truy vấn nội dung báo cáo gốc bằng LINQ
+                    var bc = await db.Baocaos.FindAsync(maBC);
+                    string noiDungGoc = bc?.Noidung ?? "Không tìm thấy nội dung...";
 
-                // Hiển thị Popup 
-                MinhChungWindow popup = new MinhChungWindow(maBC.ToString(), noiDungGoc);
-                popup.ShowDialog();
+                    // Hiển thị Popup (Giả định bạn đã có MinhChungWindow)
+                    MinhChungWindow popup = new MinhChungWindow(maBC.ToString(), noiDungGoc);
+                    popup.ShowDialog();
+                }
             }
-            catch (Exception ex) { MessageBox.Show("Lỗi truy xuất: " + ex.Message); }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Lỗi truy xuất báo cáo: " + ex.Message);
+            }
         }
     }
 }
