@@ -5,7 +5,7 @@ using System.Windows;
 using System.Windows.Controls;
 using LiveCharts;
 using LiveCharts.Wpf;
-using RoommateManager.Models; // Kiểm tra lại namespace Model của bạn nhé
+using RoommateManager.Models;
 
 namespace RoomateManager.Models
 {
