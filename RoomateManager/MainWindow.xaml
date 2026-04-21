@@ -3,15 +3,48 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Title="Roommate Manager" Height="450" Width="800"
         WindowStartupLocation="CenterScreen">
+    <Window.Resources>
+        <Style x:Key="ModernRegisterButtonStyle" TargetType="Button">
+            <Setter Property="Background" Value="#FF5722"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="Padding" Value="15,8"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}" 
+                                CornerRadius="18" Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="#E64A19"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+    </Window.Resources>
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="*"/>
-            <RowDefinition Height="65"/>
+            <RowDefinition x:Name ="MenuRow" Height="65"/>
         </Grid.RowDefinitions>
 
-        <Frame x:Name="MainFrame" Grid.Row="0" NavigationUIVisibility="Hidden"/>
+        <Grid Grid.Row="0">
+            <Frame x:Name="MainFrame" NavigationUIVisibility="Hidden"/>
+            <Button x:Name="btnDangKy" Click="DangKy_Click"
+                HorizontalAlignment="Right" VerticalAlignment="Top"
+                Margin="0,15,20,0" Cursor="Hand"
+                Style="{StaticResource ModernRegisterButtonStyle}">
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="👤" Margin="0,0,5,0" VerticalAlignment="Center"/>
+                    <TextBlock Text="Đăng ký" VerticalAlignment="Center"/>
+                </StackPanel>
+            </Button>
+        </Grid>
 
-        <Border Grid.Row="1" Background="#1976D2" Padding="0">
+        <Border x:Name="Menu"  Grid.Row="1" Background="#1976D2" Padding="0">
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*"/>

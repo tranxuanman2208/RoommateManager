@@ -14,7 +14,6 @@ namespace RoommateManager.Views
 {
     public partial class MemberListPage : Page
     {
-        private MainWindow _mainWindow;
         private bool _isManager = true;
         private string _currentUserId = "1";
 
@@ -52,12 +51,10 @@ namespace RoommateManager.Views
             new MemberVM { Id=4, Name="Tuấn Bảo", Role=MemberRole.Member, PaymentStatus=PaymentStatus.NotApplicable },
         };
 
-        public MemberListPage(MainWindow mainWindow)
+        public MemberListPage()
         {
             InitializeComponent();
-            _mainWindow = mainWindow;
             MemberList.ItemsSource = _members;
-            BtnAddMember.Visibility = _isManager ? Visibility.Visible : Visibility.Collapsed;
             RefreshNotificationBadge();
         }
 
