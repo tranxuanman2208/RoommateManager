@@ -1,30 +1,42 @@
 ﻿using RoomateManager;
+using RoomateManager.Models;
 using RoommateManager.Views;
 using System;
 using System.Collections.Generic;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
+using System.Windows.Navigation;
 
 namespace RoommateManager
 {
     public partial class MainWindow : Window
     {
-        private Button? _activeBtn; // Thêm dấu ? để cho phép null (hết lỗi CS8618)
+        private Button? _activeBtn;
         public bool HasUnsavedData { get; set; } = false;
-
+        private bool Ad = false;
+        private string? User;
         public MainWindow()
         {
             InitializeComponent();
             // Đăng ký sự kiện Loaded để đảm bảo UI đã sẵn sàng trước khi Navigate
             this.Loaded += MainWindow_Loaded;
+            MainFrame.Navigated += MainFrame_Navigated;
         }
 
         private void MainWindow_Loaded(object sender, RoutedEventArgs e)
         {
-            // Chỉ gọi BtnHome khi file XAML đã hết lỗi đỏ
-            if (BtnHome != null)
-                Navigate(BtnHome, new MemberListPage(this));
+            
+        }
+        private void MainFrame_Navigated(object sender, NavigationEventArgs e)
+        {
+            // Nếu trang hiện tại KHÔNG PHẢI là DangKyPage, hiện lại menu
+            if (!(e.Content is DangKyPage))
+            {
+                Menu.Visibility = Visibility.Visible;
+                MenuRow.Height = new GridLength(65);
+                btnDangKy.Visibility = Visibility.Visible;
+            }
         }
 
         private void NavBtn_Click(object sender, RoutedEventArgs e)
@@ -44,15 +56,21 @@ namespace RoommateManager
             switch (tag)
             {
                 case "Home":
-                    Navigate(btn, new MemberListPage(this)); break;
+                    Navigate(btn, new MemberListPage()); break;
                 case "Invoice":
-                    Navigate(btn, new CreateInvoicePage(this)); break;
+                    Navigate(btn, new PaymentPage()); break;
+                case "Chart":
+                    MainFrame.Navigate(new ThongKePage()); break;
                 case "Task":
                     Navigate(btn, new PhanCongPage()); break;
                 case "Violation":
                     Navigate(btn, new XuLyViPhamPage()); break;
+                case "BaoCao": 
+                    MainFrame.Navigate(new BaoCaoPage()); break;
+                case "VatDung":
+                    Navigate(btn, new VatDungPage()); break;
                 default:
-                    Navigate(btn, new MemberListPage(this)); break;
+                    Navigate(btn, new MemberListPage()); break;
             }
         }
 
@@ -90,6 +108,15 @@ namespace RoommateManager
             }
             catch { }
             return null;
+        }
+
+        private void DangKy_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender is not Button btn) return;
+            Navigate(btn, new DangKyPage());
+            Menu.Visibility = Visibility.Collapsed;
+            MenuRow.Height = new GridLength(0);
+            btnDangKy.Visibility = Visibility.Collapsed;
         }
     }
 }

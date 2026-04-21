@@ -70,25 +70,62 @@ namespace RoomateManager
                 return;
             }
 
+            // Giữ nguyên các biến của bạn
+            string idNguoiViPham = cbThanhVien.SelectedValue.ToString();
+            string noiDungViPham = txtNoiDung.Text.Trim();
+
             try
             {
                 using (SqlConnection conn = new SqlConnection(connStr))
                 {
                     await conn.OpenAsync();
-                    string sql = "INSERT INTO XULYVIPHAM (NGUOIVIPHAM, NOIDUNG, NGAYXULY, DONE, DAXOA) VALUES (@id, @nd, GETDATE(), 0, 0)";
-                    SqlCommand cmd = new SqlCommand(sql, conn);
-                    cmd.Parameters.Add("@id", SqlDbType.VarChar, 10).Value = cbThanhVien.SelectedValue.ToString();
-                    cmd.Parameters.Add("@nd", SqlDbType.NVarChar, 200).Value = txtNoiDung.Text.Trim();
+                    using (SqlTransaction trans = conn.BeginTransaction())
+                    {
+                        try
+                        {
+                            // --- ĐÂY LÀ LOGIC CŨ CỦA BẠN (GIỮ NGUYÊN) ---
+                            string sql = "INSERT INTO XULYVIPHAM (NGUOIVIPHAM, NOIDUNG, NGAYXULY, DONE, DAXOA) VALUES (@id, @nd, GETDATE(), 0, 0)";
+                            SqlCommand cmd = new SqlCommand(sql, conn, trans);
+                            cmd.Parameters.Add("@id", SqlDbType.VarChar, 10).Value = idNguoiViPham;
+                            cmd.Parameters.Add("@nd", SqlDbType.NVarChar, 200).Value = noiDungViPham;
+                            await cmd.ExecuteNonQueryAsync();
 
-                    await cmd.ExecuteNonQueryAsync();
+                            // --- ĐÂY LÀ LOGIC THÊM MỚI (GỬI THÔNG BÁO) ---
+                            // 1. Chèn vào bảng THONGBAO và lấy ID vừa tạo
+                            string sqlTB = @"INSERT INTO THONGBAO (NOIDUNG, NGAYTB, DAXOA) 
+                                     VALUES (@ndTB, GETDATE(), 0);
+                                     SELECT SCOPE_IDENTITY();";
+                            SqlCommand cmdTB = new SqlCommand(sqlTB, conn, trans);
+                            cmdTB.Parameters.Add("@ndTB", SqlDbType.NVarChar).Value = "[VI PHẠM] " + noiDungViPham;
+
+                            int newMaTB = Convert.ToInt32(await cmdTB.ExecuteScalarAsync());
+
+                            // 2. Chèn vào bảng CHITIET_XEM_TB để gửi ĐÍCH DANH cho người vi phạm
+                            string sqlCT = "INSERT INTO CHITIET_XEM_TB (MATB, MATV, DADOC) VALUES (@maTB, @maTV, 0)";
+                            SqlCommand cmdCT = new SqlCommand(sqlCT, conn, trans);
+                            cmdCT.Parameters.Add("@maTB", SqlDbType.Int).Value = newMaTB;
+                            cmdCT.Parameters.Add("@maTV", SqlDbType.VarChar, 10).Value = idNguoiViPham;
+                            await cmdCT.ExecuteNonQueryAsync();
+
+                            // Xác nhận lưu tất cả (cả cũ và mới)
+                            trans.Commit();
+                        }
+                        catch (Exception ex)
+                        {
+                            trans.Rollback(); // Nếu lỗi bất kỳ bước nào thì hủy hết
+                            throw ex;
+                        }
+                    }
                 }
+
+                // --- PHẦN LÀM SẠCH UI CỦA BẠN (GIỮ NGUYÊN) ---
                 txtNoiDung.Clear();
                 await LoadData();
-                MessageBox.Show("Ghi nhận vi phạm thành công!");
+                MessageBox.Show("Ghi nhận vi phạm và gửi thông báo thành công!");
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Lỗi lưu dữ liệu: " + ex.Message);
+                MessageBox.Show("Lỗi: " + ex.Message);
             }
         }
 
