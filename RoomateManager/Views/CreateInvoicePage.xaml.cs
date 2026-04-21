@@ -140,6 +140,12 @@ namespace RoommateManager.Views
         }
 
         // AC1 + AC2: Validate và Xem trước
+
+        private void BtnPayment_Click(object sender, RoutedEventArgs e)
+        {
+            // Lệnh này sẽ yêu cầu Frame đang chứa trang này chuyển sang trang PaymentPage
+            this.NavigationService.Navigate(new PaymentPage());
+        }
         private void BtnPreview_Click(object sender, RoutedEventArgs e)
         {
             bool valid = true;

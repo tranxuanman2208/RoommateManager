@@ -1,4 +1,5 @@
 ﻿using RoomateManager;
+using RoomateManager.Models;
 using RoommateManager.Views;
 using System;
 using System.Collections.Generic;
@@ -47,6 +48,10 @@ namespace RoommateManager
                     Navigate(btn, new MemberListPage(this)); break;
                 case "Invoice":
                     Navigate(btn, new CreateInvoicePage(this)); break;
+                case "Chart":
+                    // ĐIỀU HƯỚNG ĐẾN TRANG THỐNG KÊ
+                    MainFrame.Navigate(new ThongKePage());
+                    break;
                 case "Task":
                     Navigate(btn, new PhanCongPage()); break;
                 case "Violation":
