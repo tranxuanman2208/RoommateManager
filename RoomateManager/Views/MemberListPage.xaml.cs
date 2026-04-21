@@ -6,7 +6,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Documents; // Thêm thư viện này để dùng Run
+using System.Windows.Documents;
 using System.Windows.Input;
 using System.Windows.Media;
 
@@ -72,21 +72,17 @@ namespace RoommateManager.Views
 
             if (closeBracketIndex != -1)
             {
-                // Tách phần trong ngoặc: [THÔNG BÁO] hoặc [VI PHẠM]
                 string tagPart = originalText.Substring(0, closeBracketIndex + 1);
-                // Tách phần nội dung còn lại
                 string contentPart = originalText.Substring(closeBracketIndex + 1);
 
                 tb.Inlines.Clear();
 
-                // 1. Phần [TAG] màu xanh dương, in đậm
                 Run runTag = new Run(tagPart)
                 {
                     Foreground = new SolidColorBrush(Color.FromRgb(33, 150, 243)),
                     FontWeight = FontWeights.Bold
                 };
 
-                // 2. Phần nội dung phía sau màu đen mặc định
                 Run runContent = new Run(contentPart)
                 {
                     Foreground = Brushes.Black
@@ -157,6 +153,7 @@ namespace RoommateManager.Views
                     var ds = db.Thongbaos.Where(t => t.Daxoa == false)
                         .OrderByDescending(t => t.Matb)
                         .Select(t => new {
+                            Matb = t.Matb, // Đã thêm Matb để xử lý xóa/xem chi tiết
                             Noidung = t.Noidung,
                             Ngaytb = t.Ngaytb,
                             TyleDoc = db.ChitietXemTbs.Count(ct => ct.Matb == t.Matb && ct.Dadoc == true) + "/" + db.Thanhviens.Count()
@@ -248,11 +245,11 @@ namespace RoommateManager.Views
             try
             {
                 dynamic d = item;
-                string noiDung = d.Noidung;
+                int maTb = d.Matb; // Sử dụng mã thông báo
 
                 using (var db = new RoommateManagerContext())
                 {
-                    var thongBao = db.Thongbaos.AsNoTracking().FirstOrDefault(t => t.Noidung == noiDung);
+                    var thongBao = db.Thongbaos.AsNoTracking().FirstOrDefault(t => t.Matb == maTb);
 
                     if (thongBao != null)
                     {
@@ -292,11 +289,11 @@ namespace RoommateManager.Views
                 try
                 {
                     dynamic d = item;
-                    string noiDung = d.Noidung;
+                    int maTb = d.Matb; // Đã đổi sang xóa theo Mã (Matb) thay vì Nội dung
 
                     using (var db = new RoommateManagerContext())
                     {
-                        var thongBao = db.Thongbaos.FirstOrDefault(t => t.Noidung == noiDung);
+                        var thongBao = db.Thongbaos.FirstOrDefault(t => t.Matb == maTb);
                         if (thongBao != null)
                         {
                             thongBao.Daxoa = true;
