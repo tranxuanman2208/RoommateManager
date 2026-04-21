@@ -7,6 +7,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
 using System.Windows.Navigation;
+using RoomateManager.Helpers;
 
 namespace RoommateManager
 {
@@ -14,32 +15,35 @@ namespace RoommateManager
     {
         private Button? _activeBtn;
         public bool HasUnsavedData { get; set; } = false;
-        private bool Ad = false;
-        private string? User;
         public MainWindow()
         {
             InitializeComponent();
-            // Đăng ký sự kiện Loaded để đảm bảo UI đã sẵn sàng trước khi Navigate
-            this.Loaded += MainWindow_Loaded;
-            MainFrame.Navigated += MainFrame_Navigated;
+            MainFrame.Navigated += MainFrame_Navigated; //Thay đổi trang sẽ cập nhật
         }
 
-        private void MainWindow_Loaded(object sender, RoutedEventArgs e)
-        {
-            
-        }
         private void MainFrame_Navigated(object sender, NavigationEventArgs e)
         {
-            // Nếu trang hiện tại KHÔNG PHẢI là DangKyPage, hiện lại menu
-            if (!(e.Content is DangKyPage))
+            if (string.IsNullOrWhiteSpace(User.CurrentUserName) || string.IsNullOrWhiteSpace(User.CurrentUserId))
             {
-                Menu.Visibility = Visibility.Visible;
-                MenuRow.Height = new GridLength(65);
+                Menu.IsEnabled = false;
                 btnDangKy.Visibility = Visibility.Visible;
+                btnDangNhap.Visibility = Visibility.Visible;
+            }
+            else
+            {
+                Menu.Opacity = 1.0;
+                Menu.IsEnabled = true;
+                btnDangKy.Visibility = Visibility.Collapsed;
+                btnDangNhap.Visibility = Visibility.Collapsed;
+                if(User.IsAdmin == false)
+                {
+                    BtnChart.IsEnabled = false;
+                    BtnViolation.IsEnabled = false;
+                    BtnTask.IsEnabled = false;
+                }
             }
         }
-
-        private void NavBtn_Click(object sender, RoutedEventArgs e)
+        public void NavBtn_Click(object sender, RoutedEventArgs e)
         {
             if (sender is not Button btn) return;
 
@@ -69,6 +73,7 @@ namespace RoommateManager
                     MainFrame.Navigate(new BaoCaoPage()); break;
                 case "VatDung":
                     Navigate(btn, new VatDungPage()); break;
+                case "Logout": DangXuat_Click(btn, e); break;
                 default:
                     Navigate(btn, new MemberListPage()); break;
             }
@@ -97,7 +102,6 @@ namespace RoommateManager
         {
             try
             {
-                // Tìm Grid chứa các nút điều hướng (nằm trong Row 1)
                 if (VisualTreeHelper.GetChildrenCount(this) > 0)
                 {
                     var mainGrid = VisualTreeHelper.GetChild(this, 0) as Grid;
@@ -114,9 +118,23 @@ namespace RoommateManager
         {
             if (sender is not Button btn) return;
             Navigate(btn, new DangKyPage());
-            Menu.Visibility = Visibility.Collapsed;
-            MenuRow.Height = new GridLength(0);
-            btnDangKy.Visibility = Visibility.Collapsed;
+        }
+
+        private void DangNhap_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender is not Button btn) return;
+            Navigate(btn, new DangNhapPage());
+        }
+        
+        private void DangXuat_Click(object sender, RoutedEventArgs e)
+        {
+            MessageBoxResult result = MessageBox.Show("Bạn có muốn đăng xuất không?", "Xác nhận", MessageBoxButton.YesNo, MessageBoxImage.Question);
+            if (result == MessageBoxResult.Yes)
+            {
+                User.Clear();
+                MainFrame.Content = null;
+            }
+            else return;
         }
     }
 }

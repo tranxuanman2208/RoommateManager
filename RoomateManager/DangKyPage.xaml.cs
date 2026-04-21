@@ -22,9 +22,7 @@ using static System.Net.WebRequestMethods;
 
 namespace RoomateManager
 {
-    /// <summary>
-    /// Interaction logic for DangKyPage.xaml
-    /// </summary>
+
     public partial class DangKyPage : Page
     {
         public DangKyPage()
@@ -118,8 +116,11 @@ namespace RoomateManager
                     db.SaveChanges();
 
                     MessageBox.Show("Đăng ký thành công!");
-                    // Chuyển về trang đăng nhập hoặc trang chủ
-                    this.NavigationService.GoBack();
+                    // 1. Truy cập vào MainWindow hiện tại
+                    var mainWindow = (MainWindow)Application.Current.MainWindow;
+
+                    // 2. Làm trống Frame
+                    mainWindow.MainFrame.Content = null;
                 }
             }
             catch (Exception ex)
@@ -133,17 +134,8 @@ namespace RoomateManager
             // 1. Truy cập vào MainWindow hiện tại
             var mainWindow = (MainWindow)Application.Current.MainWindow;
 
-            // 2. Làm trống Frame (để trang Đăng ký biến mất)
+            // 2. Làm trống Frame
             mainWindow.MainFrame.Content = null;
-
-            // 3. Hiển thị lại thanh menu bên dưới
-            mainWindow.Menu.Visibility = Visibility.Visible;
-
-            // 4. Khôi phục chiều cao của hàng chứa menu (65 như thiết kế của bạn)
-            mainWindow.MenuRow.Height = new GridLength(65);
-
-            // 5. Hiển thị lại nút Đăng ký ở góc trên (nếu cần)
-            mainWindow.btnDangKy.Visibility = Visibility.Visible;
         }
     }
 }

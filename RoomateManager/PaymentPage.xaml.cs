@@ -1,41 +1,60 @@
 ﻿using RoomateManager.Models;
+using RoomateManager.Helpers;
 using System;
 using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
-using RoommateManager.Models; // Thêm dòng này để nhận diện HOADONTV và RoommateManagerContext
 
 namespace RoommateManager.Views
 {
     public partial class PaymentPage : Page
     {
-        RoommateManagerContext db = new RoommateManagerContext();
         private string currentOTP = "";
 
         public PaymentPage()
         {
             InitializeComponent();
             LoadData();
+            BtnSplitMoney.Visibility = User.IsAdmin ? Visibility.Visible : Visibility.Collapsed;
         }
-
-        // Tải dữ liệu LINQ to SQL
         private void LoadData()
         {
-            // Đảm bảo db là Context của bạn
-            var query = from hd in db.Hoadontvs
-                        join tv in db.Thanhviens on hd.Nguoichuyen equals tv.Id
-                        where hd.Daxoa == false && hd.Dadong == false
-                        select new
-                        {
-                            Mahdtv = hd.Mahdtv,
-                            TenNguoiThanhToan = tv.Ten,
-                            Noidung = hd.Noidung,
-                            Sotien = hd.Sotien,
-                            Thang = hd.Thang,
-                            Dadong = hd.Dadong
-                        };
-
-            DgInvoices.ItemsSource = query.ToList();
+            using (var db = new RoommateManagerContext())
+            {
+                if (User.IsAdmin)
+                {
+                    var query = from hd in db.Hoadontongs
+                                where hd.Daxoa == false && hd.Dadong == false
+                                select new
+                                {
+                                    ID = hd.Mahdt,
+                                    DisplayName = hd.Ten,
+                                    Noidung = hd.Noidung,
+                                    Sotien = hd.Sotien,
+                                    Thang = hd.Thang,
+                                    Dadong = hd.Dadong,
+                                    Type = "Master"
+                                };
+                    DgInvoices.ItemsSource = query.ToList();
+                }
+                else
+                {
+                    var query = from hd in db.Hoadontvs
+                                join tv in db.Thanhviens on hd.Nguoichuyen equals tv.Id
+                                where hd.Daxoa == false && hd.Dadong == false && hd.Nguoichuyen == User.CurrentUserId
+                                select new
+                                {
+                                    ID = hd.Mahdtv,
+                                    DisplayName = tv.Ten,
+                                    Noidung = hd.Noidung,
+                                    Sotien = hd.Sotien,
+                                    Thang = hd.Thang,
+                                    Dadong = hd.Dadong,
+                                    Type = "Member"
+                                };
+                    DgInvoices.ItemsSource = query.ToList();
+                }
+            }
         }
 
         // Lọc theo loại hóa đơn (Nội dung)
@@ -44,24 +63,26 @@ namespace RoommateManager.Views
             if (DgInvoices == null) return;
 
             string type = (CmbBillType.SelectedItem as ComboBoxItem).Content.ToString();
+            using (var db = new RoommateManagerContext())
+            {
+                var query = from hd in db.Hoadontvs
+                            join tv in db.Thanhviens on hd.Nguoichuyen equals tv.Id
+                            where hd.Daxoa == false && hd.Dadong == false
+                            select new
+                            {
+                                Mahdtv = hd.Mahdtv,
+                                TenNguoiThanhToan = tv.Ten,
+                                Sotien = hd.Sotien,
+                                Thang = hd.Thang,
+                                Dadong = hd.Dadong,
+                                Noidung = hd.Noidung
+                            };
 
-            var query = from hd in db.Hoadontvs
-                        join tv in db.Thanhviens on hd.Nguoichuyen equals tv.Id
-                        where hd.Daxoa == false && hd.Dadong == false
-                        select new
-                        {
-                            Mahdtv = hd.Mahdtv,
-                            TenNguoiThanhToan = tv.Ten,
-                            Sotien = hd.Sotien,
-                            Thang = hd.Thang,
-                            Dadong = hd.Dadong,
-                            Noidung = hd.Noidung
-                        };
+                if (type != "Tất cả")
+                    query = query.Where(x => x.Noidung.Contains(type));
 
-            if (type != "Tất cả")
-                query = query.Where(x => x.Noidung.Contains(type));
-
-            DgInvoices.ItemsSource = query.ToList();
+                DgInvoices.ItemsSource = query.ToList();
+            }
         }
 
 
@@ -92,16 +113,11 @@ namespace RoommateManager.Views
         private void DgInvoices_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
             dynamic selected = DgInvoices.SelectedItem;
-
             if (selected != null)
             {
-                TxtBillCode.Text = selected.Mahdtv.ToString();
-
-                // SỬA TẠI ĐÂY: Thêm định dạng "N0" để bỏ phần thập phân và thêm dấu chấm phân cách
+                TxtBillCode.Text = selected.ID.ToString();
                 if (selected.Sotien != null)
-                {
                     TxtPayAmount.Text = ((decimal)selected.Sotien).ToString("N0");
-                }
             }
         }
 
@@ -114,87 +130,99 @@ namespace RoommateManager.Views
 
         private void BtnPayNow_Click(object sender, RoutedEventArgs e)
         {
-            // 1. Kiểm tra xem đã chọn hóa đơn chưa
-            if (string.IsNullOrEmpty(TxtBillCode.Text))
-            {
-                MessageBox.Show("Vui lòng chọn một hóa đơn từ danh sách trước!", "Thông báo");
-                return;
-            }
-
-            // 2. Lấy dữ liệu dòng đang chọn
             dynamic selected = DgInvoices.SelectedItem;
             if (selected == null) return;
-
-            decimal soTienNo = (decimal)selected.Sotien;
-            decimal soTienDong = 0;
-
-            // --- CẬP NHẬT: Xử lý chuỗi số tiền nhập vào (Lọc bỏ tất cả ký tự không phải số) ---
-            string rawInput = TxtPayAmount.Text;
-            string cleanNumber = new string(rawInput.Where(c => char.IsDigit(c)).ToArray());
-
-            if (!decimal.TryParse(cleanNumber, out soTienDong))
-            {
-                MessageBox.Show("Số tiền nhập vào không hợp lệ!", "Lỗi nhập liệu");
-                return;
-            }
-
-            // --- LOGIC QUAN TRỌNG: PHẢI NHẬP CHÍNH XÁC ---
-            if (soTienDong != soTienNo)
-            {
-                MessageBox.Show($"Số tiền đóng không khớp! Bạn phải nhập chính xác: {soTienNo:N0} VNĐ",
-                                "Thanh toán thất bại", MessageBoxButton.OK, MessageBoxImage.Warning);
-                return;
-            }
-
-            // 3. Xác nhận giao dịch
-            MessageBoxResult confirm = MessageBox.Show($"Xác nhận thanh toán {soTienNo:N0} VNĐ cho hóa đơn này?",
-                                                      "Xác nhận", MessageBoxButton.YesNo, MessageBoxImage.Question);
-            if (confirm == MessageBoxResult.No) return;
-
-            // 4. Tạo và gửi mã OTP
-            Random rd = new Random();
-            currentOTP = rd.Next(1000, 9999).ToString();
-            MessageBox.Show($"Mã OTP đã được gửi!\n(Mã xác thực: {currentOTP})", "Xác thực OTP");
-
-            // 5. Nhập OTP
-            string userOTP = Microsoft.VisualBasic.Interaction.InputBox("Nhập mã xác thực OTP:", "Xác thực", "");
+            currentOTP = new Random().Next(1000, 9999).ToString();
+            string userOTP = Microsoft.VisualBasic.Interaction.InputBox($"Mã xác thực: {currentOTP}", "Nhập OTP");
 
             if (userOTP == currentOTP)
             {
-                // 6. Cập nhật Database
-                int maHD = int.Parse(TxtBillCode.Text);
-                var hdUpdate = db.Hoadontvs.SingleOrDefault(x => x.Mahdtv == maHD);
-
-                if (hdUpdate != null)
+                using (var db = new RoommateManagerContext())
                 {
-                    hdUpdate.Dadong = true;
-                    hdUpdate.Ngaygdtv = DateOnly.FromDateTime(DateTime.Now);
+                    int id = (int)selected.ID;
+                    if (selected.Type == "Member")
+                    {
+                        var hd = db.Hoadontvs.FirstOrDefault(x => x.Mahdtv == id);
+                        if (hd != null)
+                        {
+                            hd.Dadong = true;
+                            hd.Ngaygdtv = DateOnly.FromDateTime(DateTime.Now);
+                        }
+                    }
+                    else
+                    {
+                        var hd = db.Hoadontongs.FirstOrDefault(x => x.Mahdt == id);
+                        if (hd != null)
+                        {
+                            hd.Dadong = true;
+                            hd.Ngaygdt = DateOnly.FromDateTime(DateTime.Now);
+                        }
+                    }
                     db.SaveChanges();
+                }
+                MessageBox.Show("Thanh toán thành công!");
+                LoadData();
+            }
+        }
 
-                    // 7. Hiện biên lai
-                    string phuongThuc = (CmbMethod.SelectedItem as ComboBoxItem).Content.ToString();
-                    string nganHang = phuongThuc == "Chuyển khoản Ngân hàng" ? $"\n- Ngân hàng: {GetSelectedBank()}" : "";
+        private void BtnSplitMoney_Click(object sender, RoutedEventArgs e)
+        {
+            dynamic selected = DgInvoices.SelectedItem;
+            if (selected == null || selected.Type != "Master")
+            {
+                MessageBox.Show("Vui lòng chọn một Hóa đơn tổng từ danh sách!");
+                return;
+            }
 
-                    string msg = "THANH TOÁN THÀNH CÔNG!\n" +
-                                 "--------------------------\n" +
-                                 $"- Mã giao dịch: {hdUpdate.Mahdtv}\n" +
-                                 $"- Người trả: {selected.TenNguoiThanhToan}\n" +
-                                 $"- Loại phí: {selected.Noidung}\n" +
-                                 $"- Số tiền: {soTienNo:N0} VNĐ\n" +
-                                 $"- Hình thức: {phuongThuc}{nganHang}\n" +
-                                 $"- Thời gian: {DateTime.Now:dd/MM/yyyy HH:mm:ss}";
+            int idTong = (int)selected.ID;
 
-                    MessageBox.Show(msg, "Biên lai giao dịch điện tử", MessageBoxButton.OK, MessageBoxImage.Information);
+            using (var db = new RoommateManagerContext())
+            {
+                try
+                {
+                    var hdTong = db.Hoadontongs.FirstOrDefault(x => x.Mahdt == idTong);
+                    if (hdTong == null) return;
 
-                    // 8. Dọn dẹp
-                    TxtBillCode.Text = "";
-                    TxtPayAmount.Text = "";
+                    var dsThanhVien = db.Thanhviens.Where(tv => tv.Manha == hdTong.Manha).ToList();
+                    if (dsThanhVien.Count == 0)
+                    {
+                        MessageBox.Show("Phòng này chưa có thành viên!");
+                        return;
+                    }
+
+                    var confirm = MessageBox.Show($"Chia {hdTong.Sotien:N0} VNĐ cho {dsThanhVien.Count} người?",
+                        "Xác nhận", MessageBoxButton.YesNo, MessageBoxImage.Question);
+                    if (confirm == MessageBoxResult.No) return;
+
+                    decimal moiNguoi = Math.Round((hdTong.Sotien ?? 0) / dsThanhVien.Count, 2);
+
+                    foreach (var tv in dsThanhVien)
+                    {
+                        if (db.Hoadontvs.Any(x => x.Mahdt == idTong && x.Nguoichuyen == tv.Id)) continue;
+
+                        Hoadontv hdMoi = new Hoadontv();
+                        hdMoi.Mahdt = idTong;
+                        hdMoi.Noidung = hdTong.Noidung;
+                        hdMoi.Nguoichuyen = tv.Id;
+                        hdMoi.Nguoinhan = User.CurrentUserId;
+                        hdMoi.Sotien = moiNguoi;
+                        hdMoi.Thang = hdTong.Thang;
+                        hdMoi.Nam = hdTong.Nam;
+                        hdMoi.Ngaygui = DateOnly.FromDateTime(DateTime.Now);
+                        hdMoi.Dadong = false;
+                        hdMoi.Daxoa = false;
+
+                        db.Hoadontvs.Add(hdMoi);
+                    }
+
+                    db.SaveChanges();
+                    MessageBox.Show("Đã chia tiền xong!");
                     LoadData();
                 }
-            }
-            else
-            {
-                MessageBox.Show("Mã OTP không chính xác!", "Lỗi xác thực", MessageBoxButton.OK, MessageBoxImage.Error);
+                catch (Exception ex)
+                {
+                    MessageBox.Show("Lỗi: " + ex.Message);
+                }
             }
         }
     }
