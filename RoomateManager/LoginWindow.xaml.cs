@@ -1,42 +1,40 @@
-﻿
-using BCrypt.Net;
-using Microsoft.Data.SqlClient;
+﻿using BCrypt.Net;
 using RoomateManager.Helpers;
+using RoomateManager.Models;
 using RoommateManager;
 using System;
 using System.IO;
+using System.Linq;
 using System.Windows;
 
 namespace RoomateManager
 {
     public partial class LoginWindow : Window
     {
-        private readonly string _connStr =
-            @"Data Source=localhost\SQLEXPRESS;Initial Catalog=RoommateManager;Integrated Security=True;TrustServerCertificate=True;";
-
-
+       
         private const int MaxAttempts = 5;
         private const int LockMinutes = 15;
 
-
+      
         private readonly string _rememberFile =
-            Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-            "RoommateManager", "remember.txt");
+            Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+                "RoommateManager", "remember.txt");
 
         public LoginWindow()
         {
             InitializeComponent();
-            LoadRememberMe(); 
+            LoadRememberMe();
         }
 
-   
+      
         private void LoadRememberMe()
         {
             try
             {
                 if (File.Exists(_rememberFile))
                 {
-                    TxtEmail.Text = File.ReadAllText(_rememberFile);
+                    TxtUsername.Text = File.ReadAllText(_rememberFile);
                     ChkRemember.IsChecked = true;
                 }
             }
@@ -45,134 +43,114 @@ namespace RoomateManager
 
         private void BtnLogin_Click(object sender, RoutedEventArgs e)
         {
-            
+           
             BannerError.Visibility = Visibility.Collapsed;
-            ErrEmail.Visibility = Visibility.Collapsed;
+            BannerLock.Visibility = Visibility.Collapsed;
+            ErrUsername.Visibility = Visibility.Collapsed;
             ErrPassword.Visibility = Visibility.Collapsed;
+            TxtAttemptsLeft.Visibility = Visibility.Collapsed;
 
-            string email = TxtEmail.Text.Trim();
+            string username = TxtUsername.Text.Trim();
             string password = TxtPassword.Password;
 
-            
+          
             bool valid = true;
-            if (string.IsNullOrWhiteSpace(email))
-            { ErrEmail.Visibility = Visibility.Visible; valid = false; }
+            if (string.IsNullOrWhiteSpace(username))
+            { ErrUsername.Visibility = Visibility.Visible; valid = false; }
             if (string.IsNullOrWhiteSpace(password))
             { ErrPassword.Visibility = Visibility.Visible; valid = false; }
             if (!valid) return;
 
             try
             {
-                using var conn = new SqlConnection(_connStr);
-                conn.Open();
+                
+                using var db = new RoommateManagerContext();
 
                 
-                var cmd = new SqlCommand(
-                    @"SELECT ID, TEN, AD, MATKHAU, SOLANSAT, THOIGIANKHOA
-                      FROM THANHVIEN
-                      WHERE USERNAME = @email",
-                    conn);
-               
-                cmd.Parameters.AddWithValue("@email", email);
+                var user = db.Thanhviens
+                             .FirstOrDefault(tv => tv.Username == username);
 
-                using var reader = cmd.ExecuteReader();
-                if (!reader.Read())
+        
+                if (user == null)
                 {
-                  
-                    ShowLoginError();
+                    BannerError.Visibility = Visibility.Visible;
                     return;
                 }
 
-                string userId = reader["ID"].ToString()!;
-                string userName = reader["TEN"]?.ToString() ?? "";
-                string userRole = reader["AD"]?.ToString() ?? "0";
-                string? storedHash = reader["MATKHAU"]?.ToString();
-                int failCount = reader["SOLANSAT"] == DBNull.Value ? 0 : (int)reader["SOLANSAT"];
-                DateTime? lockedUntil = reader["THOIGIANKHOA"] == DBNull.Value
-                    ? null : (DateTime?)reader["THOIGIANKHOA"];
-                reader.Close();
 
-               
-                if (lockedUntil.HasValue && lockedUntil.Value > DateTime.Now)
+                if (user.Thoigiankhoa.HasValue && user.Thoigiankhoa.Value > DateTime.Now)
                 {
-                    var remaining = (lockedUntil.Value - DateTime.Now).Minutes + 1;
+                    int remaining = (int)(user.Thoigiankhoa.Value - DateTime.Now).TotalMinutes + 1;
                     BannerLock.Visibility = Visibility.Visible;
                     TxtLockMsg.Text = $"Tài khoản tạm khóa. Vui lòng thử lại sau {remaining} phút.";
                     return;
                 }
 
-                
-                bool passwordOk = storedHash == password;
-             
+          
+                bool passwordOk = false;
+                try
+                {
+                    passwordOk = BCrypt.Net.BCrypt.Verify(password, user.Matkhau);
+                }
+                catch
+                {
+                   
+                    passwordOk = user.Matkhau == password;
+                }
 
                 if (!passwordOk)
                 {
-                    failCount++;
+                 
+                    user.Solansat = (user.Solansat ?? 0) + 1;
+
                     
-                    if (failCount >= MaxAttempts)
+                    if (user.Solansat >= MaxAttempts)
                     {
-                        var lockCmd = new SqlCommand(
-                            "UPDATE THANHVIEN SET SOLANSAT = @sc, THOIGIANKHOA = @lock WHERE ID = @id", conn);
-                        lockCmd.Parameters.AddWithValue("@sc", failCount);
-                        lockCmd.Parameters.AddWithValue("@lock", DateTime.Now.AddMinutes(LockMinutes));
-                        lockCmd.Parameters.AddWithValue("@id", userId);
-                        lockCmd.ExecuteNonQuery();
+                        user.Thoigiankhoa = DateTime.Now.AddMinutes(LockMinutes);
+                        db.SaveChanges();
 
                         BannerLock.Visibility = Visibility.Visible;
                         TxtLockMsg.Text = $"Tài khoản đã bị khóa {LockMinutes} phút do đăng nhập sai quá nhiều lần.";
                     }
                     else
                     {
-                        
-                        var updateCmd = new SqlCommand(
-                            "UPDATE THANHVIEN SET SOLANSAT = @sc WHERE ID = @id", conn);
-                        updateCmd.Parameters.AddWithValue("@sc", failCount);
-                        updateCmd.Parameters.AddWithValue("@id", userId);
-                        updateCmd.ExecuteNonQuery();
-
-                        int left = MaxAttempts - failCount;
-                        TxtAttemptsLeft.Text = $"Còn {left} lần thử trước khi tài khoản bị khóa.";
+                        db.SaveChanges();
+                        int left = MaxAttempts - user.Solansat.Value;
+                        TxtAttemptsLeft.Text = $"Còn {left} lần thử trước khi bị khóa.";
                         TxtAttemptsLeft.Visibility = Visibility.Visible;
-                        ShowLoginError(); 
+                        BannerError.Visibility = Visibility.Visible; // AC3
                     }
                     return;
                 }
 
                 
-                var resetCmd = new SqlCommand(
-                    "UPDATE THANHVIEN SET SOLANSAT = 0, THOIGIANKHOA = NULL WHERE ID = @id", conn);
-                resetCmd.Parameters.AddWithValue("@id", userId);
-                resetCmd.ExecuteNonQuery();
+                user.Solansat = 0;
+                user.Thoigiankhoa = null;
+                db.SaveChanges();
 
-          
+                
                 var dir = Path.GetDirectoryName(_rememberFile);
                 if (dir != null) Directory.CreateDirectory(dir);
                 if (ChkRemember.IsChecked == true)
-                    File.WriteAllText(_rememberFile, email);
+                    File.WriteAllText(_rememberFile, username);
                 else if (File.Exists(_rememberFile))
                     File.Delete(_rememberFile);
 
-                
-                SessionManager.CurrentUserId = userId;
-                SessionManager.CurrentUserName = userName;
-                SessionManager.CurrentUserRole = userRole;
+               
+                SessionManager.CurrentUserId = user.Id;
+                SessionManager.CurrentUserName = user.Ten;
+                SessionManager.IsAdmin = user.Ad == true;
 
-             
+              
                 var main = new MainWindow();
                 main.Show();
                 this.Close();
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Lỗi kết nối database: " + ex.Message,
-                    "Lỗi", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show("Lỗi: " + ex.Message, "Lỗi",
+                    MessageBoxButton.OK, MessageBoxImage.Error);
             }
-        }
-
- 
-        private void ShowLoginError()
-        {
-            BannerError.Visibility = Visibility.Visible;
         }
     }
 }

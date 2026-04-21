@@ -7,15 +7,13 @@
     <Grid Background="#F5F5F5">
         <StackPanel VerticalAlignment="Center" Margin="40">
 
-      
-            <TextBlock Text="🏠" FontSize="48" HorizontalAlignment="Center"
-                       Margin="0,0,0,8"/>
+
+            <TextBlock Text="🏠" FontSize="48" HorizontalAlignment="Center" Margin="0,0,0,8"/>
             <TextBlock Text="Khu trọ tập thể" FontSize="22" FontWeight="Bold"
-                       HorizontalAlignment="Center" Foreground="#1976D2"
-                       Margin="0,0,0,4"/>
+                       HorizontalAlignment="Center" Foreground="#1976D2" Margin="0,0,0,4"/>
             <TextBlock Text="An toàn, văn minh, đoàn kết" FontSize="13"
-                       HorizontalAlignment="Center" Foreground="#757575"
-                       Margin="0,0,0,32"/>
+                       HorizontalAlignment="Center" Foreground="#757575" Margin="0,0,0,32"/>
+
 
             <Border x:Name="BannerLock" Background="#FFEBEE" CornerRadius="8"
                     Padding="12,8" Margin="0,0,0,12" Visibility="Collapsed">
@@ -23,27 +21,28 @@
                            TextWrapping="Wrap" FontSize="13"/>
             </Border>
 
-            <TextBlock Text="Email / Tên đăng nhập" FontSize="13"
-                       Foreground="#424242" Margin="0,0,0,6"/>
-            <Border BorderBrush="#BDBDBD" BorderThickness="1" CornerRadius="8"
-                    Background="White" Margin="0,0,0,4">
-                <TextBox x:Name="TxtEmail" BorderThickness="0" Padding="12,10"
-                         FontSize="14" Background="Transparent"/>
-            </Border>
-            <TextBlock x:Name="ErrEmail" Foreground="Red" FontSize="11"
-                       Margin="0,0,0,12" Visibility="Collapsed"
-                       Text="Vui lòng nhập email."/>
 
-            <TextBlock Text="Mật khẩu" FontSize="13"
-                       Foreground="#424242" Margin="0,0,0,6"/>
+            <TextBlock Text="Tên đăng nhập" FontSize="13" Foreground="#424242" Margin="0,0,0,6"/>
             <Border BorderBrush="#BDBDBD" BorderThickness="1" CornerRadius="8"
                     Background="White" Margin="0,0,0,4">
-                <PasswordBox x:Name="TxtPassword" BorderThickness="0" Padding="12,10"
-                             FontSize="14" Background="Transparent"/>
+                <TextBox x:Name="TxtUsername" BorderThickness="0"
+                         Padding="12,10" FontSize="14" Background="Transparent"/>
+            </Border>
+            <TextBlock x:Name="ErrUsername" Foreground="Red" FontSize="11"
+                       Margin="0,0,0,12" Visibility="Collapsed"
+                       Text="Vui lòng nhập tên đăng nhập."/>
+
+
+            <TextBlock Text="Mật khẩu" FontSize="13" Foreground="#424242" Margin="0,0,0,6"/>
+            <Border BorderBrush="#BDBDBD" BorderThickness="1" CornerRadius="8"
+                    Background="White" Margin="0,0,0,4">
+                <PasswordBox x:Name="TxtPassword" BorderThickness="0"
+                             Padding="12,10" FontSize="14" Background="Transparent"/>
             </Border>
             <TextBlock x:Name="ErrPassword" Foreground="Red" FontSize="11"
                        Margin="0,0,0,12" Visibility="Collapsed"
                        Text="Vui lòng nhập mật khẩu."/>
+
 
             <Border x:Name="BannerError" Background="#FFEBEE" CornerRadius="8"
                     Padding="12,8" Margin="0,0,0,12" Visibility="Collapsed">
@@ -51,15 +50,21 @@
                            Foreground="#C62828" FontSize="13"/>
             </Border>
 
+
             <CheckBox x:Name="ChkRemember" Content="Ghi nhớ đăng nhập"
                       Margin="0,0,0,24" FontSize="13" Foreground="#424242"/>
+
+
+            <TextBlock x:Name="TxtAttemptsLeft" HorizontalAlignment="Center"
+                       Foreground="#E65100" FontSize="12"
+                       Margin="0,0,0,8" Visibility="Collapsed"/>
+
 
             <Button x:Name="BtnLogin" Content="Đăng nhập"
                     Click="BtnLogin_Click"
                     Background="#1976D2" Foreground="White"
                     FontSize="15" FontWeight="Bold"
-                    BorderThickness="0" Padding="0,14"
-                    Cursor="Hand">
+                    BorderThickness="0" Padding="0,14" Cursor="Hand">
                 <Button.Template>
                     <ControlTemplate TargetType="Button">
                         <Border Background="{TemplateBinding Background}"
@@ -71,9 +76,6 @@
                 </Button.Template>
             </Button>
 
-            <TextBlock x:Name="TxtAttemptsLeft" HorizontalAlignment="Center"
-                       Foreground="#E65100" FontSize="12" Margin="0,10,0,0"
-                       Visibility="Collapsed"/>
         </StackPanel>
     </Grid>
 </Window>

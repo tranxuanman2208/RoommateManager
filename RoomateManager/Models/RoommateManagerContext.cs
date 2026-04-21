@@ -34,7 +34,7 @@ public partial class RoommateManagerContext : DbContext
     public virtual DbSet<Xulyvipham> Xulyviphams { get; set; }
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-        => optionsBuilder.UseSqlServer("Data Source=TRANMAN\\MSSQLSERVER02;Initial Catalog=RoommateManager;User ID=sa;Password=Mandepzai2208!;Trust Server Certificate=True");
+        => optionsBuilder.UseSqlServer("Data Source=localhost\\SQLEXPRESS;Initial Catalog=RoommateManager;Integrated Security=True;Trust Server Certificate=True");
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

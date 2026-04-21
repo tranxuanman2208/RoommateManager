@@ -1,5 +1,4 @@
-﻿
-using System.Windows;
+﻿using System.Windows;
 
 namespace RoomateManager
 {
@@ -8,7 +7,6 @@ namespace RoomateManager
         protected override void OnStartup(StartupEventArgs e)
         {
             base.OnStartup(e);
-            
             var login = new LoginWindow();
             login.Show();
         }
