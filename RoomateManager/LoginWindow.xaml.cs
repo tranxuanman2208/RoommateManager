@@ -12,8 +12,8 @@ namespace RoomateManager
     public partial class LoginWindow : Window
     {
        
-        private const int MaxAttempts = 5;
-        private const int LockMinutes = 15;
+        private const int MaxAttempts = 99;
+        private const int LockMinutes = 3;
 
       
         private readonly string _rememberFile =
