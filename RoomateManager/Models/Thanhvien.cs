@@ -27,11 +27,7 @@ public partial class Thanhvien
 
     public string? Username { get; set; }
 
-    public string? Matkhau { get; set; }
-
-    public int? Solansat { get; set; }
-
-    public DateTime? Thoigiankhoa { get; set; }
+    public int? Diemvipham { get; set; }
 
     public virtual ICollection<Baocao> Baocaos { get; set; } = new List<Baocao>();
 

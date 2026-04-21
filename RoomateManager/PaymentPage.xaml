@@ -1,0 +1,78 @@
+﻿<Page x:Class="RoommateManager.Views.PaymentPage"
+      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+      Title="Thanh toán" Background="White">
+    <Grid Margin="20">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="200"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,15">
+            <TextBlock Text="Loại hóa đơn: " VerticalAlignment="Center" FontWeight="Bold"/>
+            <ComboBox x:Name="CmbBillType" Width="150" SelectionChanged="CmbBillType_SelectionChanged">
+                <ComboBoxItem Content="Tất cả" IsSelected="True"/>
+                <ComboBoxItem Content="Tiền điện"/>
+                <ComboBoxItem Content="Tiền nước"/>
+                <ComboBoxItem Content="Tiền nhà"/>
+            </ComboBox>
+        </StackPanel>
+
+        <DataGrid Grid.Row="1" x:Name="DgInvoices" AutoGenerateColumns="False" 
+                  IsReadOnly="True" SelectionChanged="DgInvoices_SelectionChanged">
+            <DataGrid.Columns>
+                <DataGridTextColumn Header="Mã HĐ" Binding="{Binding Mahdtv}" Width="60"/>
+                <DataGridTextColumn Header="Người thanh toán" Binding="{Binding TenNguoiThanhToan}" Width="150"/>
+                <DataGridTextColumn Header="Loại hóa đơn" Binding="{Binding Noidung}" Width="*"/>
+                <DataGridTextColumn Header="Số tiền" Binding="{Binding Sotien, StringFormat={}{0:N0} VNĐ}" Width="100"/>
+                <DataGridTextColumn Header="Tháng" Binding="{Binding Thang}" Width="50"/>
+                <DataGridCheckBoxColumn Header="Đã đóng" Binding="{Binding Dadong, Mode=OneWay}" IsReadOnly="True"/>
+            </DataGrid.Columns>
+        </DataGrid>
+
+        <Border Grid.Row="2" Background="#F9F9F9" CornerRadius="10" Margin="0,15" Padding="15">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+
+                <StackPanel Grid.Column="0" Margin="5">
+                    <TextBlock Text="Mã hóa đơn thanh toán:"/>
+                    <TextBox x:Name="TxtBillCode" IsReadOnly="True" Padding="5" Margin="0,5"/>
+                    <TextBlock Text="Nhập số tiền đóng:"/>
+                    <TextBox x:Name="TxtPayAmount" Padding="5" Margin="0,5"/>
+                </StackPanel>
+
+                <StackPanel Grid.Column="1" Margin="5">
+                    <TextBlock Text="Phương thức thanh toán:"/>
+                    <ComboBox x:Name="CmbMethod" Padding="5" Margin="0,5" SelectionChanged="CmbMethod_SelectionChanged">
+                        <ComboBoxItem Content="Chuyển khoản Ngân hàng" IsSelected="True"/>
+                        <ComboBoxItem Content="Ví MoMo"/>
+                        <ComboBoxItem Content="Ví ZaloPay"/>
+                    </ComboBox>
+
+                    <StackPanel x:Name="PnlBankSelection">
+                        <TextBlock Text="Chọn ngân hàng:"/>
+                        <WrapPanel Margin="0,5">
+                            <RadioButton Content="Vietcombank" x:Name="RbVcb" IsChecked="True" Margin="0,0,10,0"/>
+                            <RadioButton Content="BIDV" Margin="0,0,10,0"/>
+                            <RadioButton Content="Agribank" Margin="0,0,10,0"/>
+                            <RadioButton Content="TPBank"/>
+                        </WrapPanel>
+                    </StackPanel>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <Button Grid.Row="3" Content="THANH TOÁN NGAY" Height="45" 
+                Background="#E67E22" Foreground="White" FontWeight="Bold"
+                Click="BtnPayNow_Click"/>
+    </Grid>
+</Page>

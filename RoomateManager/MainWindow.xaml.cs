@@ -1,4 +1,5 @@
 ﻿using RoomateManager;
+using RoomateManager.Models;
 using RoommateManager.Views;
 using System;
 using System.Collections.Generic;
@@ -46,13 +47,20 @@ namespace RoommateManager
                 case "Home":
                     Navigate(btn, new MemberListPage(this)); break;
                 case "Invoice":
-                    Navigate(btn, new CreateInvoicePage(this)); break;
+                    Navigate(btn, new PaymentPage()); break;
+                case "Chart":
+                    MainFrame.Navigate(new ThongKePage()); break;
                 case "Task":
                     Navigate(btn, new PhanCongPage()); break;
                 case "Violation":
                     Navigate(btn, new XuLyViPhamPage()); break;
+                case "BaoCao": 
+                    MainFrame.Navigate(new BaoCaoPage());break;
                 default:
                     Navigate(btn, new MemberListPage(this)); break;
+                case "VatDung":
+                    Navigate(btn, new VatDungPage());break;
+              
             }
         }
 
