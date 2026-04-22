@@ -24,7 +24,7 @@
           IsReadOnly="True" SelectionChanged="DgInvoices_SelectionChanged">
             <DataGrid.Columns>
                 <DataGridTextColumn Header="Mã HĐ" Binding="{Binding ID}" Width="60"/>
-                <DataGridTextColumn Header="Tên/Người trả" Binding="{Binding DisplayName}" Width="150"/>
+                <DataGridTextColumn Header="Tên người cần thanh toán" Binding="{Binding DisplayName}" Width="150"/>
                 <DataGridTextColumn Header="Nội dung" Binding="{Binding Noidung}" Width="*"/>
                 <DataGridTextColumn Header="Số tiền" Binding="{Binding Sotien, StringFormat={}{0:N0} VNĐ}" Width="100"/>
                 <DataGridTextColumn Header="Tháng" Binding="{Binding Thang}" Width="50"/>

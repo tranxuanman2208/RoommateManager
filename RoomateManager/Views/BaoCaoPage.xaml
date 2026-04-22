@@ -1,0 +1,72 @@
+﻿<Page x:Class="RoomateManager.BaoCaoPage"
+      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+      Title="BaoCaoPage">
+
+    <Grid Background="#F5F5F5">
+        <TabControl Margin="10">
+            <TabItem Header="Gửi Báo Cáo">
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <StackPanel Margin="20" MaxWidth="600" HorizontalAlignment="Stretch">
+                        <TextBlock Text="Báo cáo" FontSize="18" FontWeight="Bold" Margin="0,0,0,20" Foreground="#E67E22" HorizontalAlignment="Center"/>
+
+                        <TextBlock Text="Tiêu đề vụ việc:" Margin="0,0,0,5" FontWeight="SemiBold"/>
+                        <TextBox x:Name="txtTieuDe" Height="35" Margin="0,0,0,15" VerticalContentAlignment="Center"/>
+
+                        <TextBlock Text="Mô tả chi tiết (Nêu rõ ai vi phạm):" Margin="0,0,0,5" FontWeight="SemiBold"/>
+                        <TextBox x:Name="txtNoiDung" MinHeight="100" MaxHeight="200" TextWrapping="Wrap" VerticalScrollBarVisibility="Auto" Margin="0,0,0,15" AcceptsReturn="True"/>
+
+                        <CheckBox x:Name="chkAnDanh" Content="Báo cáo ẩn danh" Margin="0,0,0,25" VerticalAlignment="Center"/>
+
+                        <Button Content="Gửi báo cáo" Click="btnGui_Click" Background="#E67E22" Foreground="White" Height="45" FontWeight="Bold" Cursor="Hand"/>
+                        <Border Height="20"/>
+                    </StackPanel>
+                </ScrollViewer>
+            </TabItem>
+
+            <TabItem Header="Bảng tin &amp; Xử lý" Selector.Selected="TabItem_Selected">
+                <Grid Margin="10">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+
+                    <DataGrid x:Name="lstBangTin" AutoGenerateColumns="False" IsReadOnly="True" 
+                              Background="White" BorderBrush="#DDD" GridLinesVisibility="None"
+                              CanUserAddRows="False" SelectionMode="Single" HeadersVisibility="Column">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="Người bị phạt" Binding="{Binding Nguoibiphat}" Width="150"/>
+
+                            <DataGridTextColumn Header="Nội dung xử phạt" Binding="{Binding Noidung}" Width="*">
+                                <DataGridTextColumn.ElementStyle>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="TextWrapping" Value="Wrap"/>
+                                        <Setter Property="Padding" Value="5"/>
+                                    </Style>
+                                </DataGridTextColumn.ElementStyle>
+                            </DataGridTextColumn>
+
+                            <DataGridTextColumn Header="Thời gian" Binding="{Binding Ngayxuly, StringFormat='dd/MM/yyyy'}" Width="120"/>
+
+                            <DataGridTemplateColumn Header="Trạng thái" Width="120">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <TextBlock Text="{Binding StatusText}" Foreground="{Binding StatusColor}" 
+                                                   FontWeight="Bold" VerticalAlignment="Center" HorizontalAlignment="Center"/>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+                        </DataGrid.Columns>
+                    </DataGrid>
+
+                    <Border Grid.Row="1" Background="#EAEAEA" Padding="15,10" CornerRadius="5" Margin="0,10,0,0">
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                            <Button x:Name="btnXoa" Content="Xóa" Click="btnXoa_Click" Margin="10,0,0,0"
+                                    Padding="15,5" Background="#C0392B" Foreground="White" FontWeight="Bold" Cursor="Hand"/>
+                        </StackPanel>
+                    </Border>
+                </Grid>
+            </TabItem>
+        </TabControl>
+    </Grid>
+</Page>

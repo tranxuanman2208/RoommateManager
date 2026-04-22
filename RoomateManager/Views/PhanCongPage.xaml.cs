@@ -1,15 +1,17 @@
-﻿using Microsoft.Win32;
+﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.Win32;
+using RoomateManager.Helpers;
+using RoomateManager.Models;
+using RoommateManager.Views;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.ComponentModel;
 using System.IO;
 using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media.Imaging;
-using System.ComponentModel;
-using Microsoft.EntityFrameworkCore;
-using RoomateManager.Models;
 
 namespace RoomateManager
 {
@@ -26,12 +28,16 @@ namespace RoomateManager
 
         private void LoadDanhSachXoayVong()
         {
+            if (!User.IsAdmin) { btnOpenAddTask.Visibility = Visibility.Collapsed; }
+            else { btnOpenAddTask.Visibility = Visibility.Visible; }
+
             try
             {
                 using (var db = new RoommateManagerContext())
                 {
                     var members = db.Thanhviens
-                                    .Where(tv => tv.Con == true) // bit trong SQL là bool
+                                    .Where(tv => tv.Con == true)
+                                    .OrderBy(tv => tv.Id)
                                     .Select(tv => new ThanhVienVM
                                     {
                                         ID = tv.Id,
@@ -74,7 +80,8 @@ namespace RoomateManager
                 {
                     var query = db.Phancongs
                                   .Include(pc => pc.NguoithuchienNavigation)
-                                  .Where(pc => pc.Nguoithuchien == idThanhVien && (pc.Daxoa == false || pc.Daxoa == null))
+                                  .Where(pc => pc.Nguoithuchien == idThanhVien && (pc.Daxoa == false || pc.Daxoa == false))
+                                  .OrderBy(pc => pc.Nguoithuchien)
                                   .ToList();
 
                     foreach (var pc in query)
@@ -108,12 +115,23 @@ namespace RoomateManager
                         {
                             Tencv = dlg.TaskName ?? "Nhiệm vụ mới",
                             Nguoithuchien = idUser,
+                            Nguoiphancong = User.CurrentUserId,
                             Ngayth = DateOnly.FromDateTime(DateTime.Now), // SQL date -> DateOnly
                             Dalam = false,
                             Daxoa = false
                         };
 
                         db.Phancongs.Add(newPC);
+                        Thongbao newtb = new Thongbao
+                        {
+                            Noidung = dlg.TaskName,
+                            Nguoitb = User.CurrentUserId,
+                            Ngaytb = DateOnly.FromDateTime(DateTime.Now),
+                            Nguoinhan = idUser,
+                            Dadoc = false,
+                            Daxoa = false
+                        };
+                        db.Thongbaos.Add(newtb);
                         await db.SaveChangesAsync();
                         LoadDataFromDB(idUser);
                     }
@@ -124,27 +142,56 @@ namespace RoomateManager
 
         private void btnUpload_Click(object sender, RoutedEventArgs e)
         {
+            // 1. Phải chọn nhiệm vụ trước mới cho tải ảnh
+            if (lstNhiemVu.SelectedItem is not KitchenTask selectedTask)
+            {
+                MessageBox.Show("Vui lòng chọn nhiệm vụ cần tải minh chứng!");
+                return;
+            }
+
+            // 2. Nếu đã hoàn thành rồi thì không cho tải đè (tùy bạn quyết định)
+            if (selectedTask.IsDone)
+            {
+                MessageBox.Show("Nhiệm vụ này đã hoàn thành!");
+                return;
+            }
+
             OpenFileDialog op = new OpenFileDialog { Filter = "Image files (*.png;*.jpeg;*.jpg)|*.png;*.jpeg;*.jpg" };
             if (op.ShowDialog() == true)
             {
                 try
                 {
+                    // Tạo thư mục lưu trữ nếu chưa có
                     string folder = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "MinhChung");
                     if (!Directory.Exists(folder)) Directory.CreateDirectory(folder);
+
+                    // Tạo tên file duy nhất để tránh trùng lặp
                     string fileName = Guid.NewGuid().ToString() + Path.GetExtension(op.FileName);
-                    File.Copy(op.FileName, Path.Combine(folder, fileName), true);
+                    string fullPath = Path.Combine(folder, fileName);
+
+                    File.Copy(op.FileName, fullPath, true);
+
+                    // Lưu Tên file vào biến tạm (đây chính là đường dẫn tương đối)
                     temporaryFileName = fileName;
-                    imgPreview.Source = new BitmapImage(new Uri(Path.Combine(folder, fileName)));
+
+                    // Hiển thị xem trước
+                    imgPreview.Source = new BitmapImage(new Uri(fullPath));
+                    MessageBox.Show("Đã tải ảnh lên bộ nhớ tạm. Nhấn 'Xác nhận' để lưu.");
                 }
-                catch { }
+                catch (Exception ex) { MessageBox.Show("Lỗi tải ảnh: " + ex.Message); }
             }
         }
 
         private async void btnXacNhan_Click(object sender, RoutedEventArgs e)
         {
-            if (lstNhiemVu.SelectedItem is not KitchenTask taskItem || string.IsNullOrEmpty(temporaryFileName))
+            if (lstNhiemVu.SelectedItem is not KitchenTask taskItem)
             {
-                MessageBox.Show("Chọn nhiệm vụ và tải ảnh minh chứng!"); return;
+                MessageBox.Show("Vui lòng chọn nhiệm vụ!"); return;
+            }
+
+            if (string.IsNullOrEmpty(temporaryFileName))
+            {
+                MessageBox.Show("Vui lòng tải ảnh minh chứng trước khi xác nhận!"); return;
             }
 
             try
@@ -154,37 +201,79 @@ namespace RoomateManager
                     var taskToUpdate = await db.Phancongs.FindAsync(taskItem.ID);
                     if (taskToUpdate != null)
                     {
+                        // Cập nhật Database
                         taskToUpdate.Dalam = true;
-                        taskToUpdate.Minhchung = temporaryFileName;
+                        taskToUpdate.Minhchung = temporaryFileName; // Lưu tên file (đường dẫn tương đối)
                         await db.SaveChangesAsync();
 
+                        // Cập nhật giao diện (ObservableCollection tự báo cho ListView)
                         taskItem.IsDone = true;
                         taskItem.MinhChungFileName = temporaryFileName;
-                        temporaryFileName = null; imgPreview.Source = null;
-                        MessageBox.Show("Thành công!");
+
+                        // Reset biến tạm
+                        temporaryFileName = null;
+                        imgPreview.Source = null;
+
+                        MessageBox.Show("Xác nhận hoàn thành nhiệm vụ thành công!");
                     }
                 }
             }
-            catch (Exception ex) { MessageBox.Show("Lỗi: " + ex.Message); }
+            catch (Exception ex) { MessageBox.Show("Lỗi lưu dữ liệu: " + ex.Message); }
+        }
+    private void btnXemMinhChung_Click(object sender, RoutedEventArgs e)
+    {
+        // 1. Lấy nhiệm vụ đang được chọn từ ListView
+        if (lstNhiemVu.SelectedItem is not KitchenTask task) return;
+
+        // 2. Kiểm tra điều kiện: Phải hoàn thành và có tên file minh chứng mới cho xem
+        if (!task.IsDone || string.IsNullOrEmpty(task.MinhChungFileName))
+        {
+            MessageBox.Show("Nhiệm vụ này chưa hoàn thành hoặc không có hình ảnh minh chứng!", "Thông báo");
+            return;
         }
 
-        private void btnXemMinhChung_Click(object sender, RoutedEventArgs e)
+        try
         {
-            if (lstNhiemVu.SelectedItem is KitchenTask task && !string.IsNullOrEmpty(task.MinhChungFileName))
+            // 3. Xác định đường dẫn đầy đủ tới file ảnh trong thư mục MinhChung
+            string folderPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "MinhChung");
+            string fullPath = Path.Combine(folderPath, task.MinhChungFileName);
+
+            if (File.Exists(fullPath))
             {
-                string path = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "MinhChung", task.MinhChungFileName);
-                if (File.Exists(path)) System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(path) { UseShellExecute = true });
+                // 4. Tạo đối tượng BitmapImage từ đường dẫn file
+                BitmapImage bitmap = new BitmapImage();
+                bitmap.BeginInit();
+                bitmap.UriSource = new Uri(fullPath);
+                // Sử dụng OnLoad để tránh việc chiếm dụng file, giúp app linh hoạt hơn
+                bitmap.CacheOption = BitmapCacheOption.OnLoad;
+                bitmap.EndInit();
+
+                // 5. Khởi tạo ImageViewerWindow và truyền ảnh vào constructor 
+                ImageViewerWindow viewer = new ImageViewerWindow(bitmap);
+
+                // Hiển thị cửa sổ xem ảnh dưới dạng hội thoại (Modal)
+                viewer.Owner = Window.GetWindow(this); // Để cửa sổ hiện chính giữa trang hiện tại
+                viewer.ShowDialog();
+            }
+            else
+            {
+                MessageBox.Show("Không tìm thấy tệp tin hình ảnh trên hệ thống!", "Lỗi");
             }
         }
+        catch (Exception ex)
+        {
+            MessageBox.Show("Không thể hiển thị hình ảnh: " + ex.Message, "Lỗi");
+        }
+    }
 
-        public class KitchenTask : INotifyPropertyChanged
+    public class KitchenTask : INotifyPropertyChanged
         {
             public int ID { get; set; }
             public string? TaskName { get; set; }
             public string? AssignedMemberName { get; set; }
             private bool _isDone;
             public bool IsDone { get => _isDone; set { _isDone = value; OnPropertyChanged(nameof(IsDone)); OnPropertyChanged(nameof(Status)); OnPropertyChanged(nameof(StatusColor)); } }
-            public string Status => IsDone ? "Đã xong" : "Đang trực";
+            public string Status => IsDone ? "Đã xong" : "Đang làm";
             public string StatusColor => IsDone ? "#27AE60" : "#E67E22";
             public string? MinhChungFileName { get; set; }
             public string? NgayThucHienDisplay { get; set; }

@@ -53,6 +53,7 @@ namespace RoomateManager
                             User.CurrentUserName = user.Username;
                             User.CurrentUserId = user.Id;
                             User.IsAdmin = (user.Ad == true) ? true : false;
+                            User.CurrentHome = user.Manha;
                             var main = (MainWindow)Application.Current.MainWindow;
                             main.NavBtn_Click(main.BtnHome, new RoutedEventArgs());
                         }

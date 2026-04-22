@@ -1,6 +1,6 @@
 ﻿using Microsoft.Win32;
+using RoomateManager.Helpers;
 using RoomateManager.Models;
-using RoommateManager.Models;
 using System;
 using System.IO;
 using System.Linq;
@@ -42,6 +42,18 @@ namespace RoommateManager.Views
         // ================= LOAD DATA =================
         void LoadData()
         {
+            if(!User.IsAdmin)
+            {
+                btnThem.Visibility = Visibility.Collapsed;
+                btnSua.Visibility = Visibility.Collapsed;
+                btnXoa.Visibility = Visibility.Collapsed;
+            }
+            else
+            {
+                btnThem.Visibility = Visibility.Visible;
+                btnSua.Visibility = Visibility.Visible;
+                btnXoa.Visibility = Visibility.Collapsed;
+            }
             gridVatDung.ItemsSource = db.Vatdungs
                 .Where(x => x.Dabo != true)
                 .ToList();

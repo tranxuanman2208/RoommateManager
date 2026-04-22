@@ -61,7 +61,7 @@
                 <ColumnDefinition Width="*"/>
             </Grid.ColumnDefinitions>
 
-            <Border Grid.Column="0" Background="White" CornerRadius="12" Padding="20" Margin="0,0,20,0" Effect="{StaticResource CardShadow}">
+            <Border Grid.Column="0" Background="White" CornerRadius="12" Padding="20" Margin="0,0,20,-72" Effect="{StaticResource CardShadow}">
                 <StackPanel>
                     <TextBlock Text="THÔNG TIN CHI TIẾT" FontWeight="Bold" Foreground="#2196F3" Margin="0,0,0,10"/>
 
@@ -75,23 +75,9 @@
 
                     <TextBlock Text="Hình ảnh" Style="{StaticResource FieldLabel}"/>
                     <Button Content="📁 Chọn tệp ảnh" Click="ChooseImage_Click" Style="{StaticResource ModernButton}" Background="#ECEFF1" Foreground="#455A64" Margin="0,0,0,10"/>
-                    <Border CornerRadius="8" 
-        BorderThickness="1" 
-        BorderBrush="#EEEEEE" 
-        Height="150" 
-        Background="#FAFAFA"
-        Cursor="Hand" 
-        ToolTip="Nhấn để xem ảnh phóng to"
-        MouseDown="ImagePreview_MouseDown">
-                        <Border.Effect>
-                            <DropShadowEffect BlurRadius="5" ShadowDepth="1" Opacity="0.05"/>
-                        </Border.Effect>
-                        <Image  
-           Stretch="UniformToFill" 
-           Margin="2"/>
-                    </Border>
+
                     <Border CornerRadius="8" BorderThickness="1" BorderBrush="#EEEEEE" Height="150" Background="#FAFAFA">
-                        <Image x:Name="imgPreview" Stretch="UniformToFill" Margin="2"/>
+                        <Image x:Name="imgPreview" Stretch="Uniform"  Margin="5" MouseDown="ImagePreview_MouseDown"/>
                     </Border>
                 </StackPanel>
             </Border>
@@ -179,9 +165,9 @@
         </Grid>
 
         <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,20,0,0">
-            <Button Content="+ THÊM MỚI" Click="Add_Click" Style="{StaticResource ModernButton}" Background="#2ECC71" Foreground="White" Width="120" Margin="10,0"/>
-            <Button Content="✏️ SỬA" Click="Update_Click" Style="{StaticResource ModernButton}" Background="#3498DB" Foreground="White" Width="120" Margin="0,0,10,0"/>
-            <Button Content="🗑 XÓA" Click="Delete_Click" Style="{StaticResource ModernButton}" Background="#E74C3C" Foreground="White" Width="100"/>
+            <Button x:Name="btnThem" Content="+ THÊM MỚI" Click="Add_Click" Style="{StaticResource ModernButton}" Background="#2ECC71" Foreground="White" Width="120" Margin="10,0"/>
+            <Button x:Name="btnSua" Content="✏️ SỬA" Click="Update_Click" Style="{StaticResource ModernButton}" Background="#3498DB" Foreground="White" Width="120" Margin="0,0,10,0"/>
+            <Button x:Name="btnXoa" Content="🗑 XÓA" Click="Delete_Click" Style="{StaticResource ModernButton}" Background="#E74C3C" Foreground="White" Width="100"/>
         </StackPanel>
 
     </Grid>

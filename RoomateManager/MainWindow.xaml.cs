@@ -35,11 +35,13 @@ namespace RoommateManager
                 Menu.IsEnabled = true;
                 btnDangKy.Visibility = Visibility.Collapsed;
                 btnDangNhap.Visibility = Visibility.Collapsed;
-                if(User.IsAdmin == false)
+                if(!User.IsAdmin)
                 {
-                    BtnChart.IsEnabled = false;
-                    BtnViolation.IsEnabled = false;
-                    BtnTask.IsEnabled = false;
+                    BtnViolation.Visibility = Visibility.Collapsed;
+                }
+                else
+                {
+                    BtnViolation.Visibility = Visibility.Visible;
                 }
             }
         }

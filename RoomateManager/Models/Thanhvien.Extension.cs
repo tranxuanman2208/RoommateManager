@@ -8,7 +8,7 @@ namespace RoomateManager.Models
 
         public string RoleDisplay => (Ad == true) ? "👑 Quản lý" : "Thành viên";
 
-        public string StatusDisplay => (Con == true) ? "Đã đóng" : "Chưa đóng";
+        public string StatusDisplay => (Con == true) ? "Hoạt động" : "OFF";
 
         public string StatusColor => (Con == true) ? "#4CAF50" : "#F44336";
         [NotMapped]

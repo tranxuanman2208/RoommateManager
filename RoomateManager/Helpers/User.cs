@@ -10,6 +10,7 @@ namespace RoomateManager.Helpers
     {
         public static string? CurrentUserId { get; set; }
         public static string? CurrentUserName { get; set; }
+        public static string? CurrentHome { get; set; }
         public static bool IsAdmin { get; set; }
 
         public static void Clear()
@@ -17,6 +18,7 @@ namespace RoomateManager.Helpers
             CurrentUserId = null;
             CurrentUserName = null;
             IsAdmin = false;
+            CurrentHome = null;
         }
     }
 }

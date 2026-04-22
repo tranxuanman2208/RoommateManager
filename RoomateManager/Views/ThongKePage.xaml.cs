@@ -5,7 +5,7 @@ using System.Windows;
 using System.Windows.Controls;
 using LiveCharts;
 using LiveCharts.Wpf;
-using RoommateManager.Models;
+using RoomateManager.Models;
 
 namespace RoomateManager.Models
 {
@@ -26,53 +26,63 @@ namespace RoomateManager.Models
         {
             try
             {
-                // 1. Truy vấn dữ liệu: Nhóm theo tên loại phí và tổng tiền các hóa đơn ĐÃ ĐÓNG
-                var data = db.Hoadontvs
-                    .Where(h => h.Thang == month && h.Dadong == true && h.Daxoa == false)
-                    .GroupBy(h => h.Noidung)
-                    .Select(g => new
-                    {
-                        LoaiPhi = g.Key,
-                        TongTien = g.Sum(x => (decimal?)x.Sotien) ?? 0
-                    })
-                    .ToList();
+                using (var db = new RoommateManagerContext())
+                {
+                    // 1. Truy vấn và nhóm theo Mancc từ bảng HOADONTONG thông qua MahdtNavigation
+                    var rawData = db.Hoadontvs
+                        .Where(h => h.Thang == month && h.Dadong == true && (h.Daxoa == false || h.Daxoa == null))
+                        .GroupBy(h => h.MahdtNavigation.Mancc)
+                        .Select(g => new
+                        {
+                            MaNCC = g.Key,
+                            TongTien = g.Sum(x => (decimal?)x.Sotien) ?? 0
+                        })
+                        .ToList();
 
-                // 2. Kiểm tra nếu không có dữ liệu thì hiện thông báo
-                if (data.Count == 0)
-                {
-                    MyPieChart.Series.Clear();
-                    TxtNoData.Visibility = Visibility.Visible;
-                    return;
-                }
-                else
-                {
+                    // 2. Chuyển đổi Mã thành Tên hiển thị bằng switch expression
+                    var data = rawData.Select(x => new
+                    {
+                        LoaiPhi = x.MaNCC switch
+                        {
+                            "NCC001" => "Tiền điện",
+                            "NCC002" => "Tiền nước",
+                            "NCC003" => "Tiền nhà",
+                            _ => "Chi phí khác" // Các mã còn lại sẽ hiện là Chi phí khác
+                        },
+                        x.TongTien
+                    }).ToList();
+
+                    // 3. Kiểm tra dữ liệu (Giữ nguyên logic cũ của bạn)
+                    if (data.Count == 0)
+                    {
+                        MyPieChart.Series.Clear();
+                        TxtNoData.Visibility = Visibility.Visible;
+                        return;
+                    }
                     TxtNoData.Visibility = Visibility.Collapsed;
-                }
 
-                // 3. Tạo SeriesCollection cho PieChart
-                SeriesCollection series = new SeriesCollection();
-
-                foreach (var item in data)
-                {
-                    series.Add(new PieSeries
+                    // 4. Đổ dữ liệu vào biểu đồ
+                    SeriesCollection series = new SeriesCollection();
+                    foreach (var item in data)
                     {
-                        Title = item.LoaiPhi,
-                        Values = new ChartValues<decimal> { item.TongTien },
-                        DataLabels = true,
-                        // Định dạng hiển thị: Tên: 1,000,000 VNĐ (25%)
-                        LabelPoint = chartPoint => string.Format("{0}: {1:N0} VNĐ ({2:P1})",
-                                                    chartPoint.SeriesView.Title,
-                                                    chartPoint.Y,
-                                                    chartPoint.Participation)
-                    });
-                }
+                        series.Add(new PieSeries
+                        {
+                            Title = item.LoaiPhi,
+                            Values = new ChartValues<decimal> { item.TongTien },
+                            DataLabels = true,
+                            LabelPoint = chartPoint => string.Format("{0}: {1:N0} VNĐ ({2:P1})",
+                                chartPoint.SeriesView.Title,
+                                chartPoint.Y,
+                                chartPoint.Participation)
+                        });
+                    }
 
-                // 4. Đổ dữ liệu vào biểu đồ
-                MyPieChart.Series = series;
+                    MyPieChart.Series = series;
+                }
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Lỗi khi tải dữ liệu biểu đồ: " + ex.Message);
+                MessageBox.Show("Lỗi thống kê: " + ex.Message);
             }
         }
 

@@ -1,7 +1,7 @@
-﻿<Page x:Class="RoomateManager.XuLyViPhamPage"
+﻿<Page x:Class="RoommateManager.Views.XuLyViPhamPage" 
       xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
       xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-      Title="XuLyViPhamPage">
+      Title="Xử lý vi phạm">
 
     <Grid Margin="15">
         <Grid.RowDefinitions>
@@ -17,11 +17,11 @@
             <StackPanel Orientation="Horizontal">
                 <StackPanel Margin="0,0,15,0">
                     <TextBlock Text="Người vi phạm:" Margin="0,0,0,5"/>
-                    <ComboBox x:Name="cbThanhVien" Width="150" DisplayMemberPath="TEN" SelectedValuePath="ID"/>
+                    <ComboBox x:Name="cbThanhVien" Width="150" DisplayMemberPath="Ten" SelectedValuePath="Id"/>
                 </StackPanel>
                 <StackPanel Margin="0,0,15,0">
                     <TextBlock Text="Nội dung vi phạm:" Margin="0,0,0,5"/>
-                    <TextBox x:Name="txtNoiDung" Width="300" MaxLength="200"/>
+                    <TextBox x:Name="txtNoiDung" Width="300" MaxLength="200" VerticalContentAlignment="Center" Height="30"/>
                 </StackPanel>
                 <Button x:Name="btnLuu" Content="＋ Ghi nhận" Click="btnLuu_Click" 
                         Background="#27AE60" Foreground="White" Width="120" Height="32" VerticalAlignment="Bottom" />
@@ -32,8 +32,8 @@
             <ListView.View>
                 <GridView>
                     <GridViewColumn Header="Người vi phạm" DisplayMemberBinding="{Binding TenNguoiVP}" Width="150"/>
-                    <GridViewColumn Header="Nội dung" DisplayMemberBinding="{Binding NOIDUNG}" Width="250"/>
-                    <GridViewColumn Header="Ngày ghi nhận" DisplayMemberBinding="{Binding NGAYXULY, StringFormat='dd/MM/yyyy'}" Width="120"/>
+                    <GridViewColumn Header="Nội dung" DisplayMemberBinding="{Binding Noidung}" Width="250"/>
+                    <GridViewColumn Header="Ngày ghi nhận" DisplayMemberBinding="{Binding Ngayxuly, StringFormat='dd/MM/yyyy'}" Width="120"/>
                     <GridViewColumn Header="Trạng thái" Width="120">
                         <GridViewColumn.CellTemplate>
                             <DataTemplate>
@@ -46,7 +46,6 @@
         </ListView>
 
         <StackPanel Grid.Row="3" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,15,0,0">
-            <Button x:Name="btnXemBaoCao" Content="🔍 Xem báo cáo gốc" Click="btnXemBaoCao_Click" Margin="5,0" Background="#95A5A6" Foreground="White" Padding="10,5"/>
             <Button x:Name="btnDone" Content="✔ Đã xử lý" Click="btnDone_Click" Margin="5,0" Background="#27AE60" Foreground="White" Padding="10,5"/>
             <Button x:Name="btnDelete" Content="🗑 Xóa" Click="btnDelete_Click" Margin="5,0" Background="#E74C3C" Foreground="White" Padding="10,5"/>
         </StackPanel>
