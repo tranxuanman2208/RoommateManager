@@ -26,6 +26,8 @@ public partial class Thanhvien
     public bool? Con { get; set; }
 
     public string? Username { get; set; }
+    public int? Solansat { get; set; }
+    public DateTime? Thoigiankhoa { get; set; }
 
     public int? Diemvipham { get; set; }
 

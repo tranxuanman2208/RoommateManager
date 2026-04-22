@@ -38,8 +38,12 @@ public partial class RoommateManagerContext : DbContext
     public virtual DbSet<Xulyvipham> Xulyviphams { get; set; }
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-//#warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see https://go.microsoft.com/fwlink/?LinkId=723263.
-        => optionsBuilder.UseSqlServer("Data Source=TRANMAN\\MSSQLSERVER02;Initial Catalog=RoommateManager;Integrated Security=True;Encrypt=True;Trust Server Certificate=True");
+    => optionsBuilder.UseSqlServer(
+        "Data Source=localhost\\SQLEXPRESS;" +
+        "Initial Catalog=RoommateManager;" +
+        "Integrated Security=True;" +
+        "Encrypt=True;" +
+        "TrustServerCertificate=True");
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -318,6 +322,12 @@ public partial class RoommateManagerContext : DbContext
                 .HasMaxLength(20)
                 .IsUnicode(false)
                 .HasColumnName("USERNAME");
+            entity.Property(e => e.Solansat)
+                  .HasColumnName("SOLANSAT");
+
+            entity.Property(e => e.Thoigiankhoa)
+                .HasColumnType("datetime")
+                .HasColumnName("THOIGIANKHOA");
 
             entity.HasOne(d => d.ManhaNavigation).WithMany(p => p.Thanhviens)
                 .HasForeignKey(d => d.Manha)

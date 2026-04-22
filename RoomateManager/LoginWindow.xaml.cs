@@ -11,11 +11,9 @@ namespace RoomateManager
 {
     public partial class LoginWindow : Window
     {
-       
         private const int MaxAttempts = 99;
-        private const int LockMinutes = 3;
+        private const int LockMinutes = 1;
 
-      
         private readonly string _rememberFile =
             Path.Combine(
                 Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
@@ -27,7 +25,6 @@ namespace RoomateManager
             LoadRememberMe();
         }
 
-      
         private void LoadRememberMe()
         {
             try
@@ -43,7 +40,6 @@ namespace RoomateManager
 
         private void BtnLogin_Click(object sender, RoutedEventArgs e)
         {
-           
             BannerError.Visibility = Visibility.Collapsed;
             BannerLock.Visibility = Visibility.Collapsed;
             ErrUsername.Visibility = Visibility.Collapsed;
@@ -53,64 +49,60 @@ namespace RoomateManager
             string username = TxtUsername.Text.Trim();
             string password = TxtPassword.Password;
 
-          
             bool valid = true;
             if (string.IsNullOrWhiteSpace(username))
             { ErrUsername.Visibility = Visibility.Visible; valid = false; }
             if (string.IsNullOrWhiteSpace(password))
             { ErrPassword.Visibility = Visibility.Visible; valid = false; }
+           
             if (!valid) return;
 
             try
             {
-                
                 using var db = new RoommateManagerContext();
 
-                
+               
                 var user = db.Thanhviens
                              .FirstOrDefault(tv => tv.Username == username);
 
-        
+           
                 if (user == null)
                 {
                     BannerError.Visibility = Visibility.Visible;
                     return;
                 }
 
-
+              
                 if (user.Thoigiankhoa.HasValue && user.Thoigiankhoa.Value > DateTime.Now)
                 {
                     int remaining = (int)(user.Thoigiankhoa.Value - DateTime.Now).TotalMinutes + 1;
                     BannerLock.Visibility = Visibility.Visible;
-                    TxtLockMsg.Text = $"Tài khoản tạm khóa. Vui lòng thử lại sau {remaining} phút.";
+                    TxtLockMsg.Text = $"Tài khoản tạm khóa. Thử lại sau {remaining} phút.";
                     return;
                 }
 
-          
+               
                 bool passwordOk = false;
                 try
                 {
-                    passwordOk = BCrypt.Net.BCrypt.Verify(password, user.Matkhau);
+                    passwordOk = BCrypt.Net.BCrypt.Verify(password, user.Pass);
                 }
                 catch
                 {
                    
-                    passwordOk = user.Matkhau == password;
+                    passwordOk = user.Pass == password;
                 }
 
                 if (!passwordOk)
                 {
-                 
                     user.Solansat = (user.Solansat ?? 0) + 1;
 
-                    
                     if (user.Solansat >= MaxAttempts)
                     {
                         user.Thoigiankhoa = DateTime.Now.AddMinutes(LockMinutes);
                         db.SaveChanges();
-
                         BannerLock.Visibility = Visibility.Visible;
-                        TxtLockMsg.Text = $"Tài khoản đã bị khóa {LockMinutes} phút do đăng nhập sai quá nhiều lần.";
+                        TxtLockMsg.Text = $"Tài khoản bị khóa {LockMinutes} phút do sai quá nhiều lần.";
                     }
                     else
                     {
@@ -118,7 +110,7 @@ namespace RoomateManager
                         int left = MaxAttempts - user.Solansat.Value;
                         TxtAttemptsLeft.Text = $"Còn {left} lần thử trước khi bị khóa.";
                         TxtAttemptsLeft.Visibility = Visibility.Visible;
-                        BannerError.Visibility = Visibility.Visible; // AC3
+                        BannerError.Visibility = Visibility.Visible;
                     }
                     return;
                 }
@@ -136,14 +128,13 @@ namespace RoomateManager
                 else if (File.Exists(_rememberFile))
                     File.Delete(_rememberFile);
 
-               
+            
                 SessionManager.CurrentUserId = user.Id;
                 SessionManager.CurrentUserName = user.Ten;
                 SessionManager.IsAdmin = user.Ad == true;
 
-              
-                var main = new MainWindow();
-                main.Show();
+                
+                new MainWindow().Show();
                 this.Close();
             }
             catch (Exception ex)
